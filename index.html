@@ -644,13 +644,36 @@ const agentConfig = {
     btn:'a-btn', err:'a-error', wrap:'a-result-wrap', body:'a-body', copy:'a-copy',
     label:'🔍 物件を分析する',
     validate: () => !v('a-address') ? '所在地を入力してください。' : null,
-    demo: demoAnalysis,
+    system: `あなたは不動産鑑定・投資分析の専門家です。入力された物件情報をもとに、以下の構成で詳細な分析レポートを日本語で作成してください。
+【構成】
+1. 相場比較（周辺の類似物件との比較・坪単価評価）
+2. 投資利回り試算（表面利回り・実質利回り）
+3. リスク評価（立地・流動性・金利・価格下落）
+4. 総評
+5. 推奨アクション
+絵文字や記号を使い、見やすい形式で出力してください。`,
+    buildPrompt: () => {
+      const addr   = v('a-address');
+      const type   = v('a-type')   || 'マンション';
+      const price  = v('a-price')  || '未入力';
+      const detail = v('a-detail') || '未入力';
+      const note   = v('a-note')   || 'なし';
+      return `【物件情報】\n所在地：${addr}\n物件種別：${type}\n価格・賃料：${price}\n築年数・面積：${detail}\nその他メモ：${note}`;
+    },
   },
   docs: {
     btn:'d-btn', err:'d-error', wrap:'d-result-wrap', body:'d-body', copy:'d-copy',
     label:'📝 文書を作成する',
     validate: () => !v('d-name') ? '物件名・所在地を入力してください。' : null,
-    demo: demoDocs,
+    system: `あなたは不動産仲介会社のベテラン営業担当者です。入力された物件情報をもとに、指定された種類の営業文書を作成してください。魅力的で読みやすく、顧客が内覧・購入を検討したくなる文章にしてください。日本語で出力してください。`,
+    buildPrompt: () => {
+      const name   = v('d-name');
+      const price  = v('d-price')  || '応相談';
+      const layout = v('d-layout') || '未入力';
+      const appeal = v('d-appeal') || '未入力';
+      const type   = v('d-type')   || '物件紹介文（ポータルサイト用）';
+      return `【作成する文書】${type}\n【物件情報】\n物件名・所在地：${name}\n価格・賃料：${price}\n間取り・面積：${layout}\nアピールポイント：${appeal}`;
+    },
   },
   check: {
     btn:'c-btn', err:'c-error', wrap:'c-result-wrap', body:'c-body', copy:'c-copy',
@@ -661,19 +684,49 @@ const agentConfig = {
       if (!isMeaningfulText(t)) return '有効な文章を貼り付けてください。';
       return null;
     },
-    demo: demoCheck,
+    system: `あなたは不動産法務の専門家です。入力された書類の文章をチェックし、以下の構成で分析結果を日本語で出力してください。
+【構成】
+1. 🔴 重大リスク（借主・買主に不利な条項、法的に問題のある記載）
+2. 🟡 注意事項（確認が必要な曖昧な記載）
+3. 🟢 問題なし（適切な記載）
+4. 総合評価と対処方法
+具体的な条文箇所を引用しながら、非専門家にもわかりやすく説明してください。`,
+    buildPrompt: () => {
+      const type = v('c-type') || '賃貸借契約書';
+      const text = v('c-text');
+      return `【書類の種類】${type}\n\n【書類の文章】\n${text}`;
+    },
   },
   report: {
     btn:'rp-btn', err:'rp-error', wrap:'rp-result-wrap', body:'rp-body', copy:'rp-copy',
     label:'📈 レポートを作成する',
     validate: () => !v('rp-area') ? '対象エリアを入力してください。' : null,
-    demo: demoReport,
+    system: `あなたは不動産市場分析の専門家です。指定されたエリア・物件種別・目的に応じた市場レポートを日本語で作成してください。
+【構成】
+1. 現在の相場水準（坪単価・成約価格・前年比）
+2. 直近の動向（需給バランス・販売期間）
+3. トレンド分析（需要・供給・リスク要因）
+4. 目的別の判断ポイントとアドバイス
+絵文字や記号を使い、営業担当者がお客様に説明しやすい形式にしてください。`,
+    buildPrompt: () => {
+      const area    = v('rp-area');
+      const type    = v('rp-type')    || 'マンション（中古）';
+      const purpose = v('rp-purpose') || '購入検討';
+      return `【レポート条件】\n対象エリア：${area}\n物件種別：${type}\n目的：${purpose}\n作成日：${new Date().toLocaleDateString('ja-JP')}`;
+    },
   },
   sns: {
     btn:'s-btn', err:'s-error', wrap:'s-result-wrap', body:'s-body', copy:'s-copy',
     label:'📱 投稿文を作成する',
     validate: () => !v('s-name') ? '物件名・エリアを入力してください。' : null,
-    demo: demoSns,
+    system: `あなたは不動産会社のSNSマーケティング担当者です。入力された物件情報をもとに、指定されたSNSに最適化した投稿文を作成してください。各SNSの特性に合わせてトーンやハッシュタグを調整し、内覧・問い合わせにつながる魅力的な投稿文を日本語で作成してください。`,
+    buildPrompt: () => {
+      const name     = v('s-name');
+      const price    = v('s-price')    || '応相談';
+      const appeal   = v('s-appeal')   || '未入力';
+      const platform = v('s-platform') || '全部（Instagram・X・LINE）';
+      return `【投稿するSNS】${platform}\n【物件情報】\n物件名・エリア：${name}\n価格・賃料：${price}\nアピールポイント：${appeal}`;
+    },
   },
 };
 
@@ -687,166 +740,30 @@ async function runAgent(type) {
   setBtnLoading(cfg.btn, null, true, cfg.label);
   document.getElementById(cfg.wrap).style.display = 'none';
 
-  await delay(700);
-
-  const text = await cfg.demo();
-  const bodyEl = document.getElementById(cfg.body);
-  bodyEl.textContent = text;
-  document.getElementById(cfg.wrap).style.display = 'block';
-  document.getElementById(cfg.wrap).scrollIntoView({ behavior:'smooth', block:'start' });
-  setBtnLoading(cfg.btn, null, false, cfg.label);
-}
-
-// =============================================
-// デモ出力関数
-// =============================================
-function demoAnalysis() {
-  const addr  = v('a-address') || '東京都渋谷区代々木2丁目';
-  const type  = v('a-type')    || 'マンション';
-  const price = v('a-price')   || '4,500万円';
-  return Promise.resolve(`📊 物件分析レポート
-
-対象物件：${addr}（${type}）
-売出価格：${price}
-
-━━━━ 相場比較 ━━━━
-周辺の類似物件（過去3ヶ月）の坪単価：約310〜340万円
-本物件の坪単価は市場相場の±5%以内に収まっており、
-適正価格帯と判断されます。
-
-🟢 価格評価：適正
-
-━━━━ 投資利回り試算 ━━━━
-想定賃料（周辺相場）：月額 15〜17万円
-表面利回り：3.8〜4.5%
-実質利回り（管理費・固定資産税控除後）：3.0〜3.6%
-
-🟡 都心物件として許容範囲内ですが、
-  実需・資産保全目的での購入が向いています。
-
-━━━━ リスク評価 ━━━━
-🟢 立地リスク：低（交通利便性高）
-🟢 流動性リスク：低（売却しやすい）
-🟡 金利上昇リスク：中（変動金利の場合は要注意）
-🔴 価格下落リスク：注意（都心価格は高値圏）
-
-━━━━ 総評 ━━━━
-長期保有・実需目的なら検討価値が高い物件です。
-ただし現在の都心価格は歴史的高値圏のため、
-投資目的の購入は慎重に判断してください。
-
-推奨アクション：
-✅ 管理組合の修繕積立金・長期修繕計画の確認
-✅ 住宅ローン審査を先行して行い金利条件を固定
-✅ 内見後に瑕疵保険の対象か確認`);
-}
-
-function demoDocs() {
-  const name   = v('d-name')   || '渋谷区代々木 3LDKマンション';
-  const price  = v('d-price')  || '4,500万円';
-  const layout = v('d-layout') || '3LDK・75㎡';
-  const appeal = v('d-appeal') || '南向き・駅徒歩5分・ペット可';
-  const type   = v('d-type')   || '物件紹介文';
-  return Promise.resolve(`【${type}】
-${name}
-
-━━━━━━━━━━━━━━━━━━━━━━━━
-理想の暮らしが、ここにある。
-━━━━━━━━━━━━━━━━━━━━━━━━
-
-${appeal.split('・').map(p=>`・${p.trim()}`).join('\n')}
-
-価格：${price}　間取り：${layout}
-
-都市の利便性を享受しながら、静かな住宅街に佇む上質な住まい。
-${appeal}という恵まれた条件で、快適な毎日をお約束します。
-
-ぜひ一度、内覧でその魅力をご体感ください。
-ご見学のお申し込みはお気軽にご連絡ください。`);
-}
-
-function demoCheck() {
-  const type = v('c-type') || '賃貸借契約書';
-  return Promise.resolve(`📑 ${type} チェック結果
-
-━━━━ 🔴 重大リスク（要確認） ━━━━
-
-🔴【通常損耗を借主負担とする条項】
-「自然損耗・通常損耗についても賃借人の負担とする」という記載は、
-国土交通省ガイドラインおよび判例上、
-無効または限定的にしか認められない条項です。
-→ 「通常損耗は賃貸人負担」に修正を求めてください。
-
-🔴【原状回復の範囲が不明確】
-「損害金等を差し引く」とあるが具体的な算定基準がありません。
-退去時にトラブルになる可能性が高いです。
-→ 別紙「原状回復の基準」が添付されているか確認してください。
-
-━━━━ 🟡 注意事項 ━━━━
-
-🟡【敷金返還の時期が不明】
-明け渡し後いつまでに返還するかの期限記載がありません。
-→「明け渡し後○日以内」の期限を明記してもらうよう交渉してください。
-
-━━━━ 🟢 問題なし ━━━━
-
-🟢 敷金の金額・支払い時期の記載：適切
-🟢 賃貸人への預け入れ義務の明記：問題なし
-
-━━━━ 総合評価 ━━━━
-
-⚠️ 要注意：署名前に修正交渉を推奨します。
-法的判断は必ず弁護士・司法書士にご確認ください。`);
-}
-
-function demoReport() {
-  const area    = v('rp-area')    || '東京都渋谷区';
-  const type    = v('rp-type')    || 'マンション（中古）';
-  const purpose = v('rp-purpose') || '購入検討';
-  return Promise.resolve(`📈 ${area} ${type} 市場レポート
-目的：${purpose}　作成日：${new Date().toLocaleDateString('ja-JP')}
-
-━━━━ 現在の相場水準 ━━━━
-坪単価（成約ベース）：280〜380万円
-平均成約価格（70㎡換算）：約5,900万円
-前年同期比：+7.2%（上昇トレンド継続中）
-
-直近3ヶ月の動向：
-・新規登録件数：やや減少（-8%）
-・成約件数：横ばい
-・平均販売期間：約42日（前年比-5日、売れ足速い）
-
-━━━━ トレンド分析 ━━━━
-🟢 需要面：都心回帰の流れが継続。在庫が出ると
-  即日〜1週間で決まるケースも増えています。
-🟡 供給面：新規売り出し物件が減少傾向。
-  売主が売り惜しむケースが散見されます。
-🔴 リスク：金利正常化が進む場合、住宅ローン
-  利用者の購買力低下が起こる可能性があります。
-
-━━━━ 判断ポイント（${purpose}） ━━━━
-✅ ゆっくり探す余裕は少ない市場環境です。
-✅ 割安物件を素早く見つけ決断する力が必要。
-✅ 都心の利回りは3〜4%台と低いため、
-  長期保有・資産防衛目的での検討が無難。`);
-}
-
-function demoSns() {
-  const name     = v('s-name')     || '渋谷区代々木 3LDKマンション';
-  const price    = v('s-price')    || '4,500万円';
-  const appeal   = v('s-appeal')  || '駅徒歩5分・南向き・ペット可';
-  const platform = v('s-platform') || '全部';
-  let out = '';
-  if (platform.includes('Instagram') || platform.includes('全部')) {
-    out += `【Instagram】\n✨ 理想の住まい、見つかりました。\n\n${name}\n📍 ${appeal}\n💰 ${price}\n\n都心へのアクセスも抜群。\n内覧のお申し込みはプロフリンクから👇\n\n#不動産 #マンション購入 #渋谷区 #代々木 #住まい探し\n\n`;
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        system: cfg.system,
+        messages: [{ role: 'user', content: cfg.buildPrompt() }],
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `ステータスコード ${res.status}`);
+    }
+    const data = await res.json();
+    const text = data.content[0].text.trim();
+    const bodyEl = document.getElementById(cfg.body);
+    bodyEl.textContent = text;
+    document.getElementById(cfg.wrap).style.display = 'block';
+    document.getElementById(cfg.wrap).scrollIntoView({ behavior:'smooth', block:'start' });
+  } catch (e) {
+    showError(cfg.err, `生成に失敗しました。しばらく待ってから再度お試しください。\n詳細：${e.message}`);
+  } finally {
+    setBtnLoading(cfg.btn, null, false, cfg.label);
   }
-  if (platform.includes('X') || platform.includes('全部')) {
-    out += `【X（旧Twitter）】\n【新着物件】${name} ${price}\n✅ ${appeal}\nお気軽にDMまたはプロフのリンクへ🏠\n#不動産 #渋谷 #マンション\n\n`;
-  }
-  if (platform.includes('LINE') || platform.includes('全部')) {
-    out += `【LINE公式アカウント用】\n🏠 新着物件のご案内です！\n\n▶ ${name}\n▶ 価格：${price}\n▶ ${appeal}\n\n「内見希望」とご返信ください。\n担当者より折り返しご連絡いたします📞`;
-  }
-  return Promise.resolve(out.trim());
 }
 </script>
 </body>
