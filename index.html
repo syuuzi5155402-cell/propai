@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PROPAI — 不動産AIエージェント</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',sans-serif;background:#f0f4fb;color:#1a2035;min-height:100vh;}
+
+/* ── ヘッダー ── */
+header{background:#fff;border-bottom:2px solid #e4e8f0;padding:0 24px;position:sticky;top:0;z-index:100;}
+.hdr{max-width:900px;margin:0 auto;height:58px;display:flex;align-items:center;justify-content:space-between;}
+.logo{font-weight:900;font-size:1.15rem;
+  background:linear-gradient(90deg,#3b7ef8,#38d9c0);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.logo-sub{font-size:.72rem;color:#94a3b8;margin-left:8px;font-weight:400;-webkit-text-fill-color:#94a3b8;}
+
+/* ── タブ ── */
+.tab-bar{background:#fff;border-bottom:1px solid #e4e8f0;padding:0 24px;
+  position:sticky;top:58px;z-index:90;}
+.tab-inner{max-width:900px;margin:0 auto;display:flex;gap:2px;overflow-x:auto;}
+.tab{padding:13px 16px;background:none;border:none;color:#94a3b8;
+  cursor:pointer;font-family:inherit;font-size:.82rem;font-weight:700;
+  border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap;}
+.tab:hover{color:#64748b;}
+.tab.active{color:#3b7ef8;border-bottom-color:#3b7ef8;}
+
+/* ── メインレイアウト ── */
+.wrap{max-width:900px;margin:0 auto;padding:36px 20px 80px;}
+.panel{display:none;}.panel.active{display:block;animation:fadeUp .25s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── 共通カード ── */
+.card{background:#fff;border:1px solid #e4e8f0;border-radius:16px;padding:28px 32px;margin-bottom:18px;}
+.card:focus-within{border-color:#3b7ef8;box-shadow:0 0 0 3px rgba(59,126,248,.1);}
+
+/* ── ステップラベル ── */
+.step-label{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.step-num{width:26px;height:26px;border-radius:50%;
+  background:linear-gradient(135deg,#3b7ef8,#38d9c0);
+  color:#fff;font-weight:900;font-size:.78rem;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.step-text{font-size:.95rem;font-weight:700;color:#1a2035;}
+
+/* ── 入力フィールド ── */
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:.76rem;color:#64748b;font-weight:700;margin-bottom:5px;}
+.field input,.field textarea,.field select{
+  width:100%;background:#f8fafc;border:1.5px solid #e4e8f0;
+  border-radius:9px;padding:11px 13px;
+  color:#1a2035;font-family:inherit;font-size:.88rem;
+  transition:border-color .2s,background .2s;}
+.field input:focus,.field textarea:focus,.field select:focus{
+  outline:none;border-color:#3b7ef8;background:#fff;}
+.field textarea{resize:vertical;min-height:120px;line-height:1.75;}
+.field select{cursor:pointer;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:600px){.field-row{grid-template-columns:1fr;}}
+
+/* 文字カウンター */
+.char-info{text-align:right;font-size:.7rem;color:#b0bac9;margin-top:4px;}
+.char-warn{color:#f59e0b;}.char-over{color:#ef4444;}
+
+/* ── ボタン ── */
+.run-btn{width:100%;padding:16px;border-radius:11px;border:none;
+  background:linear-gradient(135deg,#3b7ef8,#38d9c0);
+  color:#fff;font-family:inherit;font-size:1rem;font-weight:900;
+  cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.run-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(59,126,248,.3);}
+.run-btn:active{transform:translateY(0);}
+.run-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none;}
+
+/* ── エラー ── */
+.error-box{background:#fff8f0;border:1.5px solid #f59e0b;border-radius:10px;
+  padding:14px 18px;display:flex;align-items:flex-start;gap:10px;margin-top:14px;}
+.error-icon{font-size:1.1rem;flex-shrink:0;}
+.error-msg{font-size:.84rem;color:#92400e;line-height:1.7;font-weight:500;white-space:pre-wrap;}
+
+/* ── 結果カード（返信3パターン用） ── */
+.result-section{margin-top:6px;}
+.result-header-label{text-align:center;margin-bottom:20px;}
+.result-subtitle{font-size:.8rem;color:#64748b;margin-top:4px;text-align:center;}
+
+.pattern-card{background:#fff;border:1.5px solid #e4e8f0;border-radius:14px;
+  padding:22px 24px;margin-bottom:14px;transition:box-shadow .2s,border-color .2s;}
+.pattern-card:hover{border-color:#3b7ef8;box-shadow:0 4px 16px rgba(59,126,248,.1);}
+.pattern-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.pattern-badge{display:flex;align-items:center;gap:8px;}
+.pattern-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.pattern-name{font-size:.8rem;font-weight:700;}
+.copy-btn{background:#f1f5ff;border:1.5px solid #d0dcff;border-radius:8px;
+  padding:7px 16px;color:#3b7ef8;font-family:inherit;font-size:.8rem;font-weight:700;
+  cursor:pointer;transition:all .2s;white-space:nowrap;}
+.copy-btn:hover{background:#3b7ef8;color:#fff;border-color:#3b7ef8;}
+.copy-btn.copied{background:#22c55e;color:#fff;border-color:#22c55e;}
+.pattern-body{font-size:.88rem;line-height:1.9;color:#334155;
+  white-space:pre-wrap;word-break:break-word;
+  background:#f8fafc;border-radius:8px;padding:14px 16px;}
+
+/* ── 汎用出力エリア ── */
+.output-card{background:#fff;border:1.5px solid #e4e8f0;border-radius:14px;padding:22px 24px;}
+.output-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.output-title{font-size:.84rem;font-weight:700;color:#64748b;}
+.output-copy{background:#f1f5ff;border:1.5px solid #d0dcff;border-radius:7px;
+  padding:6px 14px;color:#3b7ef8;font-family:inherit;font-size:.76rem;font-weight:700;
+  cursor:pointer;transition:all .2s;}
+.output-copy:hover{background:#3b7ef8;color:#fff;border-color:#3b7ef8;}
+.output-copy.copied{background:#22c55e;color:#fff;border-color:#22c55e;}
+.output-body{font-size:.87rem;line-height:1.9;color:#334155;
+  white-space:pre-wrap;word-break:break-word;}
+.output-placeholder{display:flex;flex-direction:column;align-items:center;
+  justify-content:center;min-height:140px;gap:8px;color:#b0bac9;font-size:.84rem;}
+.output-placeholder .icon{font-size:2rem;opacity:.5;}
+
+/* ── ローディング ── */
+.loading-dots{display:inline-flex;gap:5px;align-items:center;}
+.loading-dots span{width:7px;height:7px;border-radius:50%;background:#3b7ef8;
+  animation:dotB .8s infinite;}
+.loading-dots span:nth-child(2){animation-delay:.15s;}
+.loading-dots span:nth-child(3){animation-delay:.3s;}
+@keyframes dotB{0%,80%,100%{transform:scale(.5);opacity:.3;}40%{transform:scale(1);opacity:1;}}
+
+/* ── ホームダッシュボード ── */
+.home-title{font-size:1.4rem;font-weight:900;margin-bottom:8px;}
+.home-sub{font-size:.88rem;color:#64748b;margin-bottom:28px;line-height:1.7;}
+.agent-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+@media(max-width:700px){.agent-grid{grid-template-columns:1fr 1fr;}}
+@media(max-width:420px){.agent-grid{grid-template-columns:1fr;}}
+.agent-card{background:#fff;border:1.5px solid #e4e8f0;border-radius:14px;
+  padding:20px;cursor:pointer;transition:all .22s;text-align:center;}
+.agent-card:hover{border-color:#3b7ef8;transform:translateY(-2px);
+  box-shadow:0 6px 20px rgba(59,126,248,.12);}
+.agent-icon{font-size:1.7rem;margin-bottom:8px;}
+.agent-name{font-size:.84rem;font-weight:700;margin-bottom:4px;color:#1a2035;}
+.agent-desc{font-size:.72rem;color:#94a3b8;line-height:1.5;}
+
+footer{text-align:center;padding:24px;font-size:.72rem;color:#b0bac9;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr">
+    <div>
+      <span class="logo">PROPAI</span>
+      <span class="logo-sub">不動産AIエージェント</span>
+    </div>
+  </div>
+</header>
+
+<div class="tab-bar">
+  <div class="tab-inner">
+    <button class="tab active" onclick="switchTab('home')">🏠 ホーム</button>
+    <button class="tab" onclick="switchTab('reply')">💬 返信文作成</button>
+    <button class="tab" onclick="switchTab('analysis')">🔍 物件分析</button>
+    <button class="tab" onclick="switchTab('docs')">📝 営業文書</button>
+    <button class="tab" onclick="switchTab('check')">📑 書類チェック</button>
+    <button class="tab" onclick="switchTab('report')">📈 市場レポート</button>
+    <button class="tab" onclick="switchTab('sns')">📱 SNS投稿</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- ホーム -->
+  <div id="panel-home" class="panel active">
+    <div class="home-title">何をしますか？</div>
+    <div class="home-sub">下のカードをクリックするか、上のタブを選んでください。</div>
+    <div class="agent-grid">
+      <div class="agent-card" onclick="switchTab('reply')">
+        <div class="agent-icon">💬</div>
+        <div class="agent-name">返信文作成</div>
+        <div class="agent-desc">問い合わせメールへの返信を3パターン自動作成</div>
+      </div>
+      <div class="agent-card" onclick="switchTab('analysis')">
+        <div class="agent-icon">🔍</div>
+        <div class="agent-name">物件分析</div>
+        <div class="agent-desc">相場・利回り・リスクを即座に分析</div>
+      </div>
+      <div class="agent-card" onclick="switchTab('docs')">
+        <div class="agent-icon">📝</div>
+        <div class="agent-name">営業文書作成</div>
+        <div class="agent-desc">物件紹介文・提案書を自動生成</div>
+      </div>
+      <div class="agent-card" onclick="switchTab('check')">
+        <div class="agent-icon">📑</div>
+        <div class="agent-name">書類チェック</div>
+        <div class="agent-desc">契約書のリスク箇所を自動でチェック</div>
+      </div>
+      <div class="agent-card" onclick="switchTab('report')">
+        <div class="agent-icon">📈</div>
+        <div class="agent-name">市場レポート</div>
+        <div class="agent-desc">エリアの相場・トレンドをレポート化</div>
+      </div>
+      <div class="agent-card" onclick="switchTab('sns')">
+        <div class="agent-icon">📱</div>
+        <div class="agent-name">SNS投稿</div>
+        <div class="agent-desc">物件情報からSNS投稿文を量産</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 返信文作成 ── -->
+  <div id="panel-reply" class="panel">
+
+    <!-- STEP 1 -->
+    <div class="card">
+      <div class="step-label">
+        <div class="step-num">1</div>
+        <div class="step-text">お客様からの問い合わせ文を貼り付けてください</div>
+      </div>
+      <textarea id="r-inquiry" class="field" style="width:100%;background:#f8fafc;border:1.5px solid #e4e8f0;border-radius:9px;padding:13px;font-family:inherit;font-size:.92rem;line-height:1.8;color:#1a2035;min-height:150px;resize:vertical;transition:border-color .2s;"
+        placeholder="例：先日SUUMOで拝見した物件について内見したいのですが、今週末は可能でしょうか？"
+        maxlength="2000" oninput="rCharCount()"></textarea>
+      <div class="char-info"><span id="r-char">0 / 2000文字</span></div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="card">
+      <div class="step-label">
+        <div class="step-num">2</div>
+        <div class="step-text">ボタンを押してください</div>
+      </div>
+      <button class="run-btn" id="r-btn" onclick="runReply()">
+        <span id="r-btn-label">✨ 返信案を生成する</span>
+      </button>
+      <div id="r-error"></div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div id="r-result" style="display:none;">
+      <div class="card" style="border-color:#3b7ef8;background:#f8fbff;">
+        <div class="step-label" style="justify-content:center;margin-bottom:6px;">
+          <div class="step-num">3</div>
+          <div class="step-text">返信案が3パターン作成されました</div>
+        </div>
+        <div style="text-align:center;font-size:.78rem;color:#64748b;margin-bottom:20px;">
+          使いたい文章の「コピー」ボタンを押して、そのまま貼り付けて使えます
+        </div>
+        <div id="r-patterns"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── 物件分析 ── -->
+  <div id="panel-analysis" class="panel">
+    <div class="card">
+      <div class="step-label">
+        <div class="step-num">1</div>
+        <div class="step-text">物件の情報を入力してください</div>
+      </div>
+      <div class="field"><label>所在地</label>
+        <input type="text" id="a-address" placeholder="例：東京都渋谷区代々木2丁目"></div>
+      <div class="field-row">
+        <div class="field"><label>物件種別</label>
+          <select id="a-type">
+            <option>マンション</option><option>一戸建て</option>
+            <option>アパート</option><option>土地</option><option>収益ビル</option>
+          </select></div>
+        <div class="field"><label>価格・賃料</label>
+          <input type="text" id="a-price" placeholder="例：4,500万円 / 月15万円"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>築年数・面積（任意）</label>
+          <input type="text" id="a-detail" placeholder="例：築15年・65㎡"></div>
+        <div class="field"><label>その他メモ（任意）</label>
+          <input type="text" id="a-note" placeholder="例：南向き・駅徒歩5分"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="step-label">
+        <div class="step-num">2</div>
+        <div class="step-text">ボタンを押してください</div>
+      </div>
+      <button class="run-btn" id="a-btn" onclick="runAgent('analysis')">🔍 物件を分析する</button>
+      <div id="a-error"></div>
+    </div>
+    <div id="a-result-wrap" style="display:none;">
+      <div class="output-card">
+        <div class="output-header">
+          <div class="output-title">📊 分析結果</div>
+          <button class="output-copy" id="a-copy" onclick="copyOutput('a-body','a-copy')">コピー</button>
+        </div>
+        <div class="output-body" id="a-body"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 営業文書 ── -->
+  <div id="panel-docs" class="panel">
+    <div class="card">
+      <div class="step-label">
+        <div class="step-num">1</div>
+        <div class="step-text">物件の情報を入力してください</div>
+      </div>
+      <div class="field"><label>物件名・所在地</label>
+        <input type="text" id="d-name" placeholder="例：グランドパレス代々木 / 渋谷区代々木2丁目"></div>
+      <div class="field-row">
+        <div class="field"><label>価格・賃料</label>
+          <input type="text" id="d-price" placeholder="例：4,500万円"></div>
+        <div class="field"><label>間取り・面積</label>
+          <input type="text" id="d-layout" placeholder="例：3LDK・75㎡"></div>
+      </div>
+      <div class="field"><label>アピールポイント</label>
+        <input type="text" id="d-appeal" placeholder="例：南向き角部屋・駅徒歩5分・ペット可"></div>
+      <div class="field"><label>作成する文書の種類</label>
+        <select id="d-type">
+          <option>物件紹介文（ポータルサイト用）</option>
+          <option>提案書（お客様向け）</option>
+          <option>チラシ・DM原稿</option>
+        </select></div>
+    </div>
+    <div class="card">
+      <div class="step-label">
+        <div class="step-num">2</div>
+        <div class="step-text">ボタンを押してください</div>
+      </div>
+      <button class="run-btn" id="d-btn" onclick="runAgent('docs')">📝 文書を作成する</button>
+      <div id="d-error"></div>
+    </div>
+    <div id="d-result-wrap" style="display:none;">
+      <div class="output-card">
+        <div class="output-header">
+          <div class="output-title">📄 作成された文書</div>
+          <button class="output-copy" id="d-copy" onclick="copyOutput('d-body','d-copy')">コピー</button>
+        </div>
+        <div class="output-body" id="d-body"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 書類チェック ── -->
+  <div id="panel-check" class="panel">
+    <div class="card">
+      <div class="step-label">
+        <div class="step-num">1</div>
+        <div class="step-text">チェックしたい書類の文章を貼り付けてください</div>
+      </div>
+      <div class="field"><label>書類の種類</label>
+        <select id="c-type">
+          <option>賃貸借契約書</option><option>売買契約書</option>
+          <option>重要事項説明書</option>
+        </select></div>
+      <div class="field"><label>書類の文章（チェックしたい箇所を貼り付け）</label>
+        <textarea id="c-text" placeholder="例：第〇条（敷金）賃借人は本契約締結と同時に..." maxlength="3000" style="min-height:160px;"></textarea></div>
+    </div>
+    <div class="card">
+      <div class="step-label">
+        <div class="step-num">2</div>
+        <div class="step-text">ボタンを押してください</div>
+      </div>
+      <button class="run-btn" id="c-btn" onclick="runAgent('check')">📑 書類をチェックする</button>
+      <div id="c-error"></div>
+    </div>
+    <div id="c-result-wrap" style="display:none;">
+      <div class="output-card">
+        <div class="output-header">
+          <div class="output-title">⚠️ チェック結果</div>
+          <button class="output-copy" id="c-copy" onclick="copyOutput('c-body','c-copy')">コピー</button>
+        </div>
+        <div class="output-body" id="c-body"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 市場レポート ── -->
+  <div id="panel-report" class="panel">
+    <div class="card">
+      <div class="step-label">
+        <div class="step-num">1</div>
+        <div class="step-text">レポートの条件を入力してください</div>
+      </div>
+      <div class="field"><label>対象エリア</label>
+        <input type="text" id="rp-area" placeholder="例：東京都渋谷区、大阪市北区"></div>
+      <div class="field-row">
+        <div class="field"><label>物件種別</label>
+          <select id="rp-type">
+            <option>マンション（中古）</option><option>マンション（新築）</option>
+            <option>一戸建て</option><option>土地</option><option>収益物件</option>
+          </select></div>
+        <div class="field"><label>目的</label>
+          <select id="rp-purpose">
+            <option>購入検討</option><option>売却判断</option>
+            <option>投資判断</option><option>市場把握</option>
+          </select></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="step-label">
+        <div class="step-num">2</div>
+        <div class="step-text">ボタンを押してください</div>
+      </div>
+      <button class="run-btn" id="rp-btn" onclick="runAgent('report')">📈 レポートを作成する</button>
+      <div id="rp-error"></div>
+    </div>
+    <div id="rp-result-wrap" style="display:none;">
+      <div class="output-card">
+        <div class="output-header">
+          <div class="output-title">📊 市場レポート</div>
+          <button class="output-copy" id="rp-copy" onclick="copyOutput('rp-body','rp-copy')">コピー</button>
+        </div>
+        <div class="output-body" id="rp-body"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SNS投稿 ── -->
+  <div id="panel-sns" class="panel">
+    <div class="card">
+      <div class="step-label">
+        <div class="step-num">1</div>
+        <div class="step-text">物件の情報を入力してください</div>
+      </div>
+      <div class="field"><label>物件名・エリア</label>
+        <input type="text" id="s-name" placeholder="例：渋谷区代々木 3LDK マンション"></div>
+      <div class="field-row">
+        <div class="field"><label>価格・賃料</label>
+          <input type="text" id="s-price" placeholder="例：4,500万円"></div>
+        <div class="field"><label>投稿するSNS</label>
+          <select id="s-platform">
+            <option>全部（Instagram・X・LINE）</option>
+            <option>Instagram</option><option>X（旧Twitter）</option><option>LINE</option>
+          </select></div>
+      </div>
+      <div class="field"><label>アピールポイント</label>
+        <input type="text" id="s-appeal" placeholder="例：駅徒歩5分・南向き・ペット可"></div>
+    </div>
+    <div class="card">
+      <div class="step-label">
+        <div class="step-num">2</div>
+        <div class="step-text">ボタンを押してください</div>
+      </div>
+      <button class="run-btn" id="s-btn" onclick="runAgent('sns')">📱 投稿文を作成する</button>
+      <div id="s-error"></div>
+    </div>
+    <div id="s-result-wrap" style="display:none;">
+      <div class="output-card">
+        <div class="output-header">
+          <div class="output-title">✨ 作成された投稿文</div>
+          <button class="output-copy" id="s-copy" onclick="copyOutput('s-body','s-copy')">コピー</button>
+        </div>
+        <div class="output-body" id="s-body"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<footer>PROPAI 不動産AIエージェント</footer>
+
+<script>
+// =============================================
+// タブ切り替え
+// =============================================
+const TABS = ['home','reply','analysis','docs','check','report','sns'];
+function switchTab(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  document.querySelectorAll('.tab')[TABS.indexOf(id)].classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// =============================================
+// ユーティリティ
+// =============================================
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+function v(id) { return (document.getElementById(id)?.value || '').trim(); }
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function isMeaningfulText(text) {
+  if (!text || text.trim().length === 0) return false;
+  const stripped = text.replace(/[\s\u3000！？!?。、・…「」『』【】〔〕()（）♪〜~\-_＿－#＃@＠\/\\|｜]+/g, '');
+  return stripped.length >= 2;
+}
+
+function showError(errorId, msg) {
+  document.getElementById(errorId).innerHTML =
+    `<div class="error-box"><div class="error-icon">⚠️</div>
+     <div class="error-msg">${msg}</div></div>`;
+}
+function clearError(errorId) {
+  document.getElementById(errorId).innerHTML = '';
+}
+
+// =============================================
+// 文字カウンター（返信タブ）
+// =============================================
+function rCharCount() {
+  const len = document.getElementById('r-inquiry').value.length;
+  const el = document.getElementById('r-char');
+  el.textContent = `${len} / 2000文字`;
+  el.className = len >= 2000 ? 'char-over' : len > 1800 ? 'char-warn' : '';
+  clearError('r-error');
+}
+
+// =============================================
+// コピー（汎用出力）
+// =============================================
+function copyOutput(bodyId, btnId) {
+  const text = document.getElementById(bodyId).innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById(btnId);
+    const orig = btn.textContent;
+    btn.textContent = '✓ コピーしました';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// =============================================
+// ボタン状態管理
+// =============================================
+function setBtnLoading(btnId, labelId, isLoading, origLabel) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = isLoading;
+  if (labelId) {
+    document.getElementById(labelId).innerHTML = isLoading
+      ? '<div class="loading-dots"><span></span><span></span><span></span></div>'
+      : origLabel;
+  } else {
+    btn.innerHTML = isLoading
+      ? '<div class="loading-dots"><span></span><span></span><span></span></div>'
+      : origLabel;
+  }
+}
+
+// =============================================
+// Claude API 呼び出し（返信文生成）
+// =============================================
+const SYSTEM_PROMPT = `あなたは不動産仲介会社の営業担当者です。お客様からの問い合わせに対して返信案を3パターン生成してください。①丁寧・フォーマル②親しみやすい③簡潔・スピード重視。必ず以下のJSON形式のみで返してください。他の文章は一切含めないでください。
+{"patterns":[{"label":"丁寧・フォーマル","body":"..."},{"label":"親しみやすい","body":"..."},{"label":"簡潔・スピード重視","body":"..."}]}`;
+
+async function callClaudeForReply(inquiry) {
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      system: SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: inquiry }],
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    const msg = err?.error?.message || `ステータスコード ${res.status}`;
+    throw new Error(msg);
+  }
+
+  const data = await res.json();
+  const text = data.content[0].text.trim();
+
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error('レスポンスのJSON解析に失敗しました');
+  const parsed = JSON.parse(jsonMatch[0]);
+  if (!Array.isArray(parsed.patterns) || parsed.patterns.length < 3) {
+    throw new Error('返信パターンの取得に失敗しました');
+  }
+  return parsed.patterns;
+}
+
+// =============================================
+// 返信エージェント
+// =============================================
+async function runReply() {
+  const inquiry = v('r-inquiry');
+  clearError('r-error');
+
+  if (!inquiry) {
+    showError('r-error', 'お客様からの問い合わせ文を入力してください。\nメールやメッセージの文章をコピーして貼り付けてください。');
+    return;
+  }
+  if (!isMeaningfulText(inquiry)) {
+    showError('r-error', '有効な文章を入力してください。\n記号のみ・1文字だけの入力は処理できません。');
+    return;
+  }
+
+  setBtnLoading('r-btn', 'r-btn-label', true, '✨ 返信案を生成する');
+  const resultEl = document.getElementById('r-result');
+  const patternsEl = document.getElementById('r-patterns');
+  resultEl.style.display = 'none';
+  patternsEl.innerHTML = '';
+
+  let patterns;
+  try {
+    patterns = await callClaudeForReply(inquiry);
+  } catch (e) {
+    setBtnLoading('r-btn', 'r-btn-label', false, '✨ 返信案を生成する');
+    showError('r-error', `生成に失敗しました。しばらく待ってから再度お試しください。\n詳細：${e.message}`);
+    return;
+  }
+
+  const colors = [
+    { dot:'#3b7ef8', nameColor:'#3b7ef8' },
+    { dot:'#22c55e', nameColor:'#16a34a' },
+    { dot:'#f59e0b', nameColor:'#b45309' },
+  ];
+
+  resultEl.style.display = 'block';
+
+  for (let i = 0; i < 3; i++) {
+    await delay(100);
+    const c = colors[i] || colors[2];
+    const p = patterns[i];
+    const card = document.createElement('div');
+    card.className = 'pattern-card';
+    card.innerHTML = `
+      <div class="pattern-header">
+        <div class="pattern-badge">
+          <div class="pattern-dot" style="background:${c.dot};"></div>
+          <div class="pattern-name" style="color:${c.nameColor};">パターン${i+1}：${escHtml(p.label)}</div>
+        </div>
+        <button class="copy-btn" id="p-copy-${i}"
+          onclick="copyPatternText(${i})">コピー</button>
+      </div>
+      <div class="pattern-body" id="p-body-${i}">${escHtml(p.body)}</div>`;
+    patternsEl.appendChild(card);
+  }
+
+  resultEl.scrollIntoView({ behavior:'smooth', block:'start' });
+  setBtnLoading('r-btn', 'r-btn-label', false, '✨ 返信案を生成する');
+}
+
+function copyPatternText(idx) {
+  const text = document.getElementById(`p-body-${idx}`).innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById(`p-copy-${idx}`);
+    btn.textContent = '✓ コピーしました';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'コピー'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// =============================================
+// 汎用エージェント実行
+// =============================================
+const agentConfig = {
+  analysis: {
+    btn:'a-btn', err:'a-error', wrap:'a-result-wrap', body:'a-body', copy:'a-copy',
+    label:'🔍 物件を分析する',
+    validate: () => !v('a-address') ? '所在地を入力してください。' : null,
+    demo: demoAnalysis,
+  },
+  docs: {
+    btn:'d-btn', err:'d-error', wrap:'d-result-wrap', body:'d-body', copy:'d-copy',
+    label:'📝 文書を作成する',
+    validate: () => !v('d-name') ? '物件名・所在地を入力してください。' : null,
+    demo: demoDocs,
+  },
+  check: {
+    btn:'c-btn', err:'c-error', wrap:'c-result-wrap', body:'c-body', copy:'c-copy',
+    label:'📑 書類をチェックする',
+    validate: () => {
+      const t = v('c-text');
+      if (!t) return '書類の文章を入力してください。';
+      if (!isMeaningfulText(t)) return '有効な文章を貼り付けてください。';
+      return null;
+    },
+    demo: demoCheck,
+  },
+  report: {
+    btn:'rp-btn', err:'rp-error', wrap:'rp-result-wrap', body:'rp-body', copy:'rp-copy',
+    label:'📈 レポートを作成する',
+    validate: () => !v('rp-area') ? '対象エリアを入力してください。' : null,
+    demo: demoReport,
+  },
+  sns: {
+    btn:'s-btn', err:'s-error', wrap:'s-result-wrap', body:'s-body', copy:'s-copy',
+    label:'📱 投稿文を作成する',
+    validate: () => !v('s-name') ? '物件名・エリアを入力してください。' : null,
+    demo: demoSns,
+  },
+};
+
+async function runAgent(type) {
+  const cfg = agentConfig[type];
+  clearError(cfg.err);
+
+  const errMsg = cfg.validate();
+  if (errMsg) { showError(cfg.err, errMsg); return; }
+
+  setBtnLoading(cfg.btn, null, true, cfg.label);
+  document.getElementById(cfg.wrap).style.display = 'none';
+
+  await delay(700);
+
+  const text = await cfg.demo();
+  const bodyEl = document.getElementById(cfg.body);
+  bodyEl.textContent = text;
+  document.getElementById(cfg.wrap).style.display = 'block';
+  document.getElementById(cfg.wrap).scrollIntoView({ behavior:'smooth', block:'start' });
+  setBtnLoading(cfg.btn, null, false, cfg.label);
+}
+
+// =============================================
+// デモ出力関数
+// =============================================
+function demoAnalysis() {
+  const addr  = v('a-address') || '東京都渋谷区代々木2丁目';
+  const type  = v('a-type')    || 'マンション';
+  const price = v('a-price')   || '4,500万円';
+  return Promise.resolve(`📊 物件分析レポート
+
+対象物件：${addr}（${type}）
+売出価格：${price}
+
+━━━━ 相場比較 ━━━━
+周辺の類似物件（過去3ヶ月）の坪単価：約310〜340万円
+本物件の坪単価は市場相場の±5%以内に収まっており、
+適正価格帯と判断されます。
+
+🟢 価格評価：適正
+
+━━━━ 投資利回り試算 ━━━━
+想定賃料（周辺相場）：月額 15〜17万円
+表面利回り：3.8〜4.5%
+実質利回り（管理費・固定資産税控除後）：3.0〜3.6%
+
+🟡 都心物件として許容範囲内ですが、
+  実需・資産保全目的での購入が向いています。
+
+━━━━ リスク評価 ━━━━
+🟢 立地リスク：低（交通利便性高）
+🟢 流動性リスク：低（売却しやすい）
+🟡 金利上昇リスク：中（変動金利の場合は要注意）
+🔴 価格下落リスク：注意（都心価格は高値圏）
+
+━━━━ 総評 ━━━━
+長期保有・実需目的なら検討価値が高い物件です。
+ただし現在の都心価格は歴史的高値圏のため、
+投資目的の購入は慎重に判断してください。
+
+推奨アクション：
+✅ 管理組合の修繕積立金・長期修繕計画の確認
+✅ 住宅ローン審査を先行して行い金利条件を固定
+✅ 内見後に瑕疵保険の対象か確認`);
+}
+
+function demoDocs() {
+  const name   = v('d-name')   || '渋谷区代々木 3LDKマンション';
+  const price  = v('d-price')  || '4,500万円';
+  const layout = v('d-layout') || '3LDK・75㎡';
+  const appeal = v('d-appeal') || '南向き・駅徒歩5分・ペット可';
+  const type   = v('d-type')   || '物件紹介文';
+  return Promise.resolve(`【${type}】
+${name}
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+理想の暮らしが、ここにある。
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+${appeal.split('・').map(p=>`・${p.trim()}`).join('\n')}
+
+価格：${price}　間取り：${layout}
+
+都市の利便性を享受しながら、静かな住宅街に佇む上質な住まい。
+${appeal}という恵まれた条件で、快適な毎日をお約束します。
+
+ぜひ一度、内覧でその魅力をご体感ください。
+ご見学のお申し込みはお気軽にご連絡ください。`);
+}
+
+function demoCheck() {
+  const type = v('c-type') || '賃貸借契約書';
+  return Promise.resolve(`📑 ${type} チェック結果
+
+━━━━ 🔴 重大リスク（要確認） ━━━━
+
+🔴【通常損耗を借主負担とする条項】
+「自然損耗・通常損耗についても賃借人の負担とする」という記載は、
+国土交通省ガイドラインおよび判例上、
+無効または限定的にしか認められない条項です。
+→ 「通常損耗は賃貸人負担」に修正を求めてください。
+
+🔴【原状回復の範囲が不明確】
+「損害金等を差し引く」とあるが具体的な算定基準がありません。
+退去時にトラブルになる可能性が高いです。
+→ 別紙「原状回復の基準」が添付されているか確認してください。
+
+━━━━ 🟡 注意事項 ━━━━
+
+🟡【敷金返還の時期が不明】
+明け渡し後いつまでに返還するかの期限記載がありません。
+→「明け渡し後○日以内」の期限を明記してもらうよう交渉してください。
+
+━━━━ 🟢 問題なし ━━━━
+
+🟢 敷金の金額・支払い時期の記載：適切
+🟢 賃貸人への預け入れ義務の明記：問題なし
+
+━━━━ 総合評価 ━━━━
+
+⚠️ 要注意：署名前に修正交渉を推奨します。
+法的判断は必ず弁護士・司法書士にご確認ください。`);
+}
+
+function demoReport() {
+  const area    = v('rp-area')    || '東京都渋谷区';
+  const type    = v('rp-type')    || 'マンション（中古）';
+  const purpose = v('rp-purpose') || '購入検討';
+  return Promise.resolve(`📈 ${area} ${type} 市場レポート
+目的：${purpose}　作成日：${new Date().toLocaleDateString('ja-JP')}
+
+━━━━ 現在の相場水準 ━━━━
+坪単価（成約ベース）：280〜380万円
+平均成約価格（70㎡換算）：約5,900万円
+前年同期比：+7.2%（上昇トレンド継続中）
+
+直近3ヶ月の動向：
+・新規登録件数：やや減少（-8%）
+・成約件数：横ばい
+・平均販売期間：約42日（前年比-5日、売れ足速い）
+
+━━━━ トレンド分析 ━━━━
+🟢 需要面：都心回帰の流れが継続。在庫が出ると
+  即日〜1週間で決まるケースも増えています。
+🟡 供給面：新規売り出し物件が減少傾向。
+  売主が売り惜しむケースが散見されます。
+🔴 リスク：金利正常化が進む場合、住宅ローン
+  利用者の購買力低下が起こる可能性があります。
+
+━━━━ 判断ポイント（${purpose}） ━━━━
+✅ ゆっくり探す余裕は少ない市場環境です。
+✅ 割安物件を素早く見つけ決断する力が必要。
+✅ 都心の利回りは3〜4%台と低いため、
+  長期保有・資産防衛目的での検討が無難。`);
+}
+
+function demoSns() {
+  const name     = v('s-name')     || '渋谷区代々木 3LDKマンション';
+  const price    = v('s-price')    || '4,500万円';
+  const appeal   = v('s-appeal')  || '駅徒歩5分・南向き・ペット可';
+  const platform = v('s-platform') || '全部';
+  let out = '';
+  if (platform.includes('Instagram') || platform.includes('全部')) {
+    out += `【Instagram】\n✨ 理想の住まい、見つかりました。\n\n${name}\n📍 ${appeal}\n💰 ${price}\n\n都心へのアクセスも抜群。\n内覧のお申し込みはプロフリンクから👇\n\n#不動産 #マンション購入 #渋谷区 #代々木 #住まい探し\n\n`;
+  }
+  if (platform.includes('X') || platform.includes('全部')) {
+    out += `【X（旧Twitter）】\n【新着物件】${name} ${price}\n✅ ${appeal}\nお気軽にDMまたはプロフのリンクへ🏠\n#不動産 #渋谷 #マンション\n\n`;
+  }
+  if (platform.includes('LINE') || platform.includes('全部')) {
+    out += `【LINE公式アカウント用】\n🏠 新着物件のご案内です！\n\n▶ ${name}\n▶ 価格：${price}\n▶ ${appeal}\n\n「内見希望」とご返信ください。\n担当者より折り返しご連絡いたします📞`;
+  }
+  return Promise.resolve(out.trim());
+}
+</script>
+</body>
+</html>
