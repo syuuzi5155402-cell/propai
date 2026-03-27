@@ -137,6 +137,14 @@ header{background:#fff;border-bottom:2px solid #e4e8f0;padding:0 24px;position:s
 .agent-desc{font-size:.72rem;color:#94a3b8;line-height:1.5;}
 
 footer{text-align:center;padding:24px;font-size:.72rem;color:#b0bac9;}
+
+/* ── 申込フォーム成功 ── */
+.trial-success{background:#f0fdf4;border:2px solid #86efac;border-radius:16px;
+  padding:40px 32px;text-align:center;}
+.trial-success-icon{font-size:3rem;margin-bottom:12px;}
+.trial-success-title{font-size:1.2rem;font-weight:900;color:#16a34a;margin-bottom:8px;}
+.trial-success-sub{font-size:.88rem;color:#166534;line-height:1.8;}
+.required-mark{color:#ef4444;margin-left:3px;}
 </style>
 </head>
 <body>
@@ -159,6 +167,8 @@ footer{text-align:center;padding:24px;font-size:.72rem;color:#b0bac9;}
     <button class="tab" onclick="switchTab('check')">📑 書類チェック</button>
     <button class="tab" onclick="switchTab('report')">📈 市場レポート</button>
     <button class="tab" onclick="switchTab('sns')">📱 SNS投稿</button>
+    <button class="tab" onclick="switchTab('seo')">✍️ SEO記事生成</button>
+    <button class="tab" onclick="switchTab('trial')">📋 無料トライアル申込</button>
   </div>
 </div>
 
@@ -198,6 +208,16 @@ footer{text-align:center;padding:24px;font-size:.72rem;color:#b0bac9;}
         <div class="agent-icon">📱</div>
         <div class="agent-name">SNS投稿</div>
         <div class="agent-desc">物件情報からSNS投稿文を量産</div>
+      </div>
+      <div class="agent-card" onclick="switchTab('seo')">
+        <div class="agent-icon">✍️</div>
+        <div class="agent-name">SEO記事生成</div>
+        <div class="agent-desc">キーワードから集客記事を自動生成</div>
+      </div>
+      <div class="agent-card" onclick="switchTab('trial')" style="border-color:#3b7ef8;background:linear-gradient(135deg,#f0f7ff,#f0fef9);">
+        <div class="agent-icon">🎉</div>
+        <div class="agent-name" style="color:#3b7ef8;">無料トライアル申込</div>
+        <div class="agent-desc">まずは無料でお試しください</div>
       </div>
     </div>
   </div>
@@ -447,6 +467,83 @@ footer{text-align:center;padding:24px;font-size:.72rem;color:#b0bac9;}
     </div>
   </div>
 
+  <!-- ── SEO記事生成 ── -->
+  <div id="panel-seo" class="panel">
+    <div class="card">
+      <div class="step-label">
+        <div class="step-num">1</div>
+        <div class="step-text">記事の条件を入力してください</div>
+      </div>
+      <div class="field"><label>ターゲットキーワード<span class="required-mark">*</span></label>
+        <input type="text" id="seo-kw" placeholder="例：仙台市 不動産 AI / 賃貸 審査 落ちた 理由"></div>
+      <div class="field"><label>ターゲット読者</label>
+        <input type="text" id="seo-target" placeholder="例：不動産会社の経営者・担当者"></div>
+      <div class="field"><label>目標文字数</label>
+        <select id="seo-length">
+          <option value="500">500字（短め・SNS・コラム向け）</option>
+          <option value="1000" selected>1000字（標準・ブログ向け）</option>
+          <option value="2000">2000字（詳しい・SEO向け）</option>
+        </select></div>
+    </div>
+    <div class="card">
+      <div class="step-label">
+        <div class="step-num">2</div>
+        <div class="step-text">ボタンを押してください</div>
+      </div>
+      <button class="run-btn" id="seo-btn" onclick="runAgent('seo')">✍️ SEO記事を生成する</button>
+      <div id="seo-error"></div>
+    </div>
+    <div id="seo-result-wrap" style="display:none;">
+      <div class="output-card">
+        <div class="output-header">
+          <div class="output-title">📄 生成された記事</div>
+          <button class="output-copy" id="seo-copy" onclick="copyOutput('seo-body','seo-copy')">コピー</button>
+        </div>
+        <div class="output-body" id="seo-body"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 無料トライアル申込 ── -->
+  <div id="panel-trial" class="panel">
+    <form id="trial-form" onsubmit="submitTrial(event)">
+      <div class="card">
+        <div class="step-label">
+          <div class="step-num">1</div>
+          <div class="step-text">お申込み情報を入力してください</div>
+        </div>
+        <div class="field"><label>会社名<span class="required-mark">*</span></label>
+          <input type="text" id="tf-company" required placeholder="例：株式会社〇〇不動産"></div>
+        <div class="field-row">
+          <div class="field"><label>担当者名<span class="required-mark">*</span></label>
+            <input type="text" id="tf-name" required placeholder="例：山田 太郎"></div>
+          <div class="field"><label>電話番号（任意）</label>
+            <input type="tel" id="tf-tel" placeholder="例：090-0000-0000"></div>
+        </div>
+        <div class="field"><label>メールアドレス<span class="required-mark">*</span></label>
+          <input type="email" id="tf-email" required placeholder="例：yamada@example.com"></div>
+      </div>
+      <div class="card">
+        <div class="step-label">
+          <div class="step-num">2</div>
+          <div class="step-text">送信してください</div>
+        </div>
+        <button type="submit" class="run-btn" id="trial-btn">
+          <span id="trial-btn-label">🎉 無料で試したい</span>
+        </button>
+        <div id="trial-error"></div>
+      </div>
+    </form>
+    <div id="trial-success" style="display:none;" class="trial-success">
+      <div class="trial-success-icon">✅</div>
+      <div class="trial-success-title">お申込みを受け付けました！</div>
+      <div class="trial-success-sub">
+        担当者より1〜2営業日以内にご連絡いたします。<br>
+        しばらくお待ちください。
+      </div>
+    </div>
+  </div>
+
 </div><!-- /wrap -->
 
 <footer>PROPAI 不動産AIエージェント</footer>
@@ -455,7 +552,7 @@ footer{text-align:center;padding:24px;font-size:.72rem;color:#b0bac9;}
 // =============================================
 // タブ切り替え
 // =============================================
-const TABS = ['home','reply','analysis','docs','check','report','sns'];
+const TABS = ['home','reply','analysis','docs','check','report','sns','seo','trial'];
 function switchTab(id) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -728,6 +825,24 @@ const agentConfig = {
       return `【投稿するSNS】${platform}\n【物件情報】\n物件名・エリア：${name}\n価格・賃料：${price}\nアピールポイント：${appeal}`;
     },
   },
+  seo: {
+    btn:'seo-btn', err:'seo-error', wrap:'seo-result-wrap', body:'seo-body', copy:'seo-copy',
+    label:'✍️ SEO記事を生成する',
+    validate: () => !v('seo-kw') ? 'ターゲットキーワードを入力してください。' : null,
+    system: `あなたはSEOライターの専門家です。入力されたキーワード・ターゲット読者・文字数に合わせて、検索上位を狙えるSEO記事を日本語で作成してください。
+【構成】
+- タイトル（H1として）
+- リード文（検索意図を踏まえた導入、200字前後）
+- 本文（H2・H3を使って構造化、具体的な情報を盛り込む）
+- まとめ
+指定文字数に合わせ、読者が行動したくなる文章にしてください。`,
+    buildPrompt: () => {
+      const kw     = v('seo-kw');
+      const target = v('seo-target') || '不動産会社の経営者・担当者';
+      const length = document.getElementById('seo-length')?.value || '1000';
+      return `【ターゲットキーワード】${kw}\n【ターゲット読者】${target}\n【目標文字数】${length}字`;
+    },
+  },
 };
 
 async function runAgent(type) {
@@ -763,6 +878,40 @@ async function runAgent(type) {
     showError(cfg.err, `生成に失敗しました。しばらく待ってから再度お試しください。\n詳細：${e.message}`);
   } finally {
     setBtnLoading(cfg.btn, null, false, cfg.label);
+  }
+}
+
+// =============================================
+// 無料トライアル申込フォーム送信
+// =============================================
+async function submitTrial(event) {
+  event.preventDefault();
+  clearError('trial-error');
+  setBtnLoading('trial-btn', 'trial-btn-label', true, '🎉 無料で試したい');
+
+  const payload = {
+    company: v('tf-company'),
+    name:    v('tf-name'),
+    email:   v('tf-email'),
+    tel:     v('tf-tel') || '（未入力）',
+  };
+
+  try {
+    const res = await fetch('https://formspree.io/f/YOUR_FORM_ID', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'accept': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error || `ステータスコード ${res.status}`);
+    }
+    document.getElementById('trial-form').style.display = 'none';
+    document.getElementById('trial-success').style.display = 'block';
+    document.getElementById('trial-success').scrollIntoView({ behavior:'smooth', block:'start' });
+  } catch (e) {
+    showError('trial-error', `送信に失敗しました。しばらく待ってから再度お試しください。\n詳細：${e.message}`);
+    setBtnLoading('trial-btn', 'trial-btn-label', false, '🎉 無料で試したい');
   }
 }
 </script>
