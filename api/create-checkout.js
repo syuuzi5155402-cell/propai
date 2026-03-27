@@ -3,18 +3,28 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { priceId, email } = req.body;
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) {
+    return res.status(500).json({
+      error: 'STRIPE_SECRET_KEY が設定されていません。Vercel の Environment Variables を確認してください。',
+    });
+  }
+
+  // req.body が文字列の場合は JSON パース
+  let body = req.body;
+  if (typeof body === 'string') {
+    try { body = JSON.parse(body); } catch { body = {}; }
+  }
+
+  const { priceId, email } = body || {};
 
   if (!priceId) {
     return res.status(400).json({ error: 'priceId is required' });
   }
 
-  const secretKey = process.env.STRIPE_SECRET_KEY;
-  if (!secretKey) {
-    return res.status(500).json({ error: 'STRIPE_SECRET_KEY が設定されていません' });
-  }
-
-  const baseUrl = `https://${req.headers.host}`;
+  const host = req.headers['x-forwarded-host'] || req.headers.host;
+  const proto = req.headers['x-forwarded-proto'] || 'https';
+  const baseUrl = `${proto}://${host}`;
 
   const params = new URLSearchParams();
   params.append('mode', 'subscription');
@@ -37,7 +47,9 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     if (!response.ok) {
-      return res.status(response.status).json({ error: data.error?.message || '決済セッションの作成に失敗しました' });
+      return res.status(response.status).json({
+        error: data.error?.message || '決済セッションの作成に失敗しました',
+      });
     }
 
     return res.status(200).json({ url: data.url });
