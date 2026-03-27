@@ -164,6 +164,42 @@ footer{text-align:center;padding:24px;font-size:.72rem;color:#b0bac9;}
 .admin-cancel-btn{padding:11px 18px;border-radius:9px;border:1.5px solid #e4e8f0;
   background:#f8fafc;color:#64748b;font-family:inherit;font-size:.9rem;cursor:pointer;}
 
+/* ── 利用回数バッジ ── */
+.usage-badge{font-size:.72rem;color:#64748b;background:#f1f5ff;
+  border:1px solid #d0dcff;border-radius:20px;padding:4px 12px;white-space:nowrap;}
+.usage-badge.low{background:#fff8f0;border-color:#fde68a;color:#92400e;}
+.limit-plan-btn{background:linear-gradient(135deg,#3b7ef8,#38d9c0);color:#fff;
+  border:none;border-radius:6px;padding:4px 12px;font-family:inherit;
+  font-size:.82rem;font-weight:700;cursor:pointer;margin-left:6px;}
+
+/* ── 料金プラン ── */
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:8px;}
+@media(max-width:700px){.pricing-grid{grid-template-columns:1fr;}}
+.plan-card{background:#fff;border:2px solid #e4e8f0;border-radius:18px;
+  padding:28px 22px;text-align:center;transition:all .2s;position:relative;}
+.plan-card.popular{border-color:#3b7ef8;box-shadow:0 8px 32px rgba(59,126,248,.15);}
+.plan-badge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);
+  background:linear-gradient(135deg,#3b7ef8,#38d9c0);color:#fff;
+  font-size:.72rem;font-weight:900;padding:4px 16px;border-radius:20px;white-space:nowrap;}
+.plan-name{font-size:1rem;font-weight:900;margin-bottom:6px;}
+.plan-price{font-size:1.6rem;font-weight:900;margin-bottom:4px;
+  background:linear-gradient(135deg,#3b7ef8,#38d9c0);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.plan-price-sub{font-size:.72rem;color:#94a3b8;margin-bottom:16px;}
+.plan-price-enterprise{font-size:1.2rem;font-weight:900;color:#1a2035;margin-bottom:4px;}
+.plan-features{text-align:left;list-style:none;margin-bottom:20px;}
+.plan-features li{font-size:.8rem;color:#334155;padding:5px 0;border-bottom:1px solid #f1f5f9;
+  display:flex;align-items:flex-start;gap:7px;line-height:1.5;}
+.plan-features li::before{content:"✓";color:#3b7ef8;font-weight:900;flex-shrink:0;}
+.plan-contact-btn{width:100%;padding:12px;border-radius:10px;border:none;
+  background:linear-gradient(135deg,#3b7ef8,#38d9c0);color:#fff;
+  font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;
+  transition:all .2s;text-decoration:none;display:block;}
+.plan-contact-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(59,126,248,.3);}
+.plan-contact-btn.outline{background:#fff;color:#3b7ef8;border:2px solid #3b7ef8;}
+.plan-contact-btn.outline:hover{background:#f0f7ff;}
+.pricing-note{text-align:center;font-size:.76rem;color:#94a3b8;margin-top:16px;line-height:1.8;}
+
 /* ── 申込フォーム成功 ── */
 .trial-success{background:#f0fdf4;border:2px solid #86efac;border-radius:16px;
   padding:40px 32px;text-align:center;}
@@ -181,6 +217,7 @@ footer{text-align:center;padding:24px;font-size:.72rem;color:#b0bac9;}
       <span class="logo">PROPAI</span>
       <span class="logo-sub">不動産AIエージェント</span>
     </div>
+    <div id="usage-badge" class="usage-badge">本日の残り利用回数：<span id="usage-count">10</span>回</div>
   </div>
 </header>
 
@@ -194,6 +231,7 @@ footer{text-align:center;padding:24px;font-size:.72rem;color:#b0bac9;}
     <button class="tab" onclick="switchTab('report')">📈 市場レポート</button>
     <button class="tab" onclick="switchTab('sns')">📱 SNS投稿</button>
     <button class="tab" onclick="switchTab('seo')">✍️ SEO記事生成</button>
+    <button class="tab" onclick="switchTab('pricing')">💰 料金プラン</button>
     <button class="tab" onclick="switchTab('trial')">📋 無料トライアル申込</button>
   </div>
 </div>
@@ -493,6 +531,76 @@ footer{text-align:center;padding:24px;font-size:.72rem;color:#b0bac9;}
     </div>
   </div>
 
+  <!-- ── 料金プラン ── -->
+  <div id="panel-pricing" class="panel">
+    <div style="text-align:center;margin-bottom:28px;">
+      <div style="font-size:1.4rem;font-weight:900;margin-bottom:8px;">料金プラン</div>
+      <div style="font-size:.88rem;color:#64748b;">不動産会社の規模に合わせてお選びください</div>
+    </div>
+    <div class="pricing-grid">
+
+      <!-- STARTER -->
+      <div class="plan-card">
+        <div class="plan-name">STARTER</div>
+        <div class="plan-price">¥19,800</div>
+        <div class="plan-price-sub">/ 月（税込）</div>
+        <ul class="plan-features">
+          <li>返信文作成</li>
+          <li>物件分析</li>
+          <li>SNS投稿文作成</li>
+          <li>月50件まで利用可能</li>
+          <li>メールサポート</li>
+        </ul>
+        <a class="plan-contact-btn outline"
+          href="mailto:syuuzi5155402@gmail.com?subject=PROPAI STARTERプラン お問い合わせ&body=会社名：%0D%0Aご担当者名：%0D%0Aメールアドレス：%0D%0Aご質問・ご要望：">
+          お問い合わせ
+        </a>
+      </div>
+
+      <!-- BUSINESS -->
+      <div class="plan-card popular">
+        <div class="plan-badge">★ おすすめ</div>
+        <div class="plan-name">BUSINESS</div>
+        <div class="plan-price">¥49,800</div>
+        <div class="plan-price-sub">/ 月（税込）</div>
+        <ul class="plan-features">
+          <li>全機能利用可能</li>
+          <li>月300件まで利用可能</li>
+          <li>書類チェック機能</li>
+          <li>SEO記事生成</li>
+          <li>優先メールサポート</li>
+        </ul>
+        <a class="plan-contact-btn"
+          href="mailto:syuuzi5155402@gmail.com?subject=PROPAI BUSINESSプラン お問い合わせ&body=会社名：%0D%0Aご担当者名：%0D%0Aメールアドレス：%0D%0Aご質問・ご要望：">
+          お問い合わせ
+        </a>
+      </div>
+
+      <!-- ENTERPRISE -->
+      <div class="plan-card">
+        <div class="plan-name">ENTERPRISE</div>
+        <div class="plan-price-enterprise">料金相談</div>
+        <div class="plan-price-sub">大手・管理会社向け</div>
+        <ul class="plan-features">
+          <li>全機能・件数無制限</li>
+          <li>既存システムAPI連携</li>
+          <li>専任サポート担当</li>
+          <li>カスタム開発対応</li>
+          <li>SLA保証</li>
+        </ul>
+        <a class="plan-contact-btn outline"
+          href="mailto:syuuzi5155402@gmail.com?subject=PROPAI ENTERPRISEプラン お問い合わせ&body=会社名：%0D%0Aご担当者名：%0D%0Aメールアドレス：%0D%0Aご質問・ご要望：">
+          お問い合わせ
+        </a>
+      </div>
+
+    </div>
+    <div class="pricing-note">
+      すべてのプランに14日間の無料トライアルが含まれています。<br>
+      お支払いはクレジットカード・銀行振込に対応。契約は月単位で解約自由。
+    </div>
+  </div>
+
   <!-- ── SEO記事生成 ── -->
   <div id="panel-seo" class="panel">
     <div class="card">
@@ -601,6 +709,56 @@ footer{text-align:center;padding:24px;font-size:.72rem;color:#b0bac9;}
 
 <script>
 // =============================================
+// 利用回数制限
+// =============================================
+const USAGE_KEY   = 'propai_usage';
+const DAILY_LIMIT = 10;
+
+function getUsageData() {
+  const today = new Date().toLocaleDateString('ja-JP');
+  try {
+    const data = JSON.parse(localStorage.getItem(USAGE_KEY) || '{}');
+    if (data.date !== today) return { date: today, count: 0 };
+    return data;
+  } catch { return { date: new Date().toLocaleDateString('ja-JP'), count: 0 }; }
+}
+
+function getRemainingUsage() {
+  if (isAdmin()) return Infinity;
+  return Math.max(0, DAILY_LIMIT - getUsageData().count);
+}
+
+function consumeUsage() {
+  if (isAdmin()) return;
+  const data = getUsageData();
+  data.count++;
+  localStorage.setItem(USAGE_KEY, JSON.stringify(data));
+  updateUsageBadge();
+}
+
+function updateUsageBadge() {
+  const badge = document.getElementById('usage-badge');
+  if (isAdmin()) { badge.style.display = 'none'; return; }
+  const rem = getRemainingUsage();
+  badge.style.display = '';
+  badge.className = 'usage-badge' + (rem <= 3 ? ' low' : '');
+  document.getElementById('usage-count').textContent = rem;
+}
+
+function checkUsageLimit(errId) {
+  if (isAdmin()) return true;
+  if (getRemainingUsage() <= 0) {
+    document.getElementById(errId).innerHTML =
+      `<div class="error-box"><div class="error-icon">🔒</div>
+       <div class="error-msg">本日の無料利用回数（${DAILY_LIMIT}回）に達しました。<br>
+       制限なしでご利用いただける有料プランは
+       <button class="limit-plan-btn" onclick="switchTab('pricing')">こちら →</button></div></div>`;
+    return false;
+  }
+  return true;
+}
+
+// =============================================
 // 管理者モード
 // =============================================
 const ADMIN_KEY = 'propai_admin';
@@ -639,13 +797,14 @@ function adminLogout() {
 }
 function updateAdminBar() {
   document.getElementById('admin-bar').style.display = isAdmin() ? 'flex' : 'none';
+  updateUsageBadge();
 }
-(function initAdmin() { updateAdminBar(); })();
+(function initAdmin() { updateAdminBar(); updateUsageBadge(); })();
 
 // =============================================
 // タブ切り替え
 // =============================================
-const TABS = ['home','reply','analysis','docs','check','report','sns','seo','trial'];
+const TABS = ['home','reply','analysis','docs','check','report','sns','seo','pricing','trial'];
 function switchTab(id) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -769,6 +928,7 @@ async function runReply() {
     showError('r-error', '有効な文章を入力してください。\n記号のみ・1文字だけの入力は処理できません。');
     return;
   }
+  if (!checkUsageLimit('r-error')) return;
 
   setBtnLoading('r-btn', 'r-btn-label', true, '✨ 返信案を生成する');
   const resultEl = document.getElementById('r-result');
@@ -779,6 +939,7 @@ async function runReply() {
   let patterns;
   try {
     patterns = await callClaudeForReply(inquiry);
+    consumeUsage();
   } catch (e) {
     setBtnLoading('r-btn', 'r-btn-label', false, '✨ 返信案を生成する');
     showError('r-error', `生成に失敗しました。しばらく待ってから再度お試しください。\n詳細：${e.message}`);
@@ -944,6 +1105,7 @@ async function runAgent(type) {
 
   const errMsg = cfg.validate();
   if (errMsg) { showError(cfg.err, errMsg); return; }
+  if (!checkUsageLimit(cfg.err)) return;
 
   setBtnLoading(cfg.btn, null, true, cfg.label);
   document.getElementById(cfg.wrap).style.display = 'none';
@@ -965,6 +1127,7 @@ async function runAgent(type) {
     const text = data.content[0].text.trim();
     const bodyEl = document.getElementById(cfg.body);
     bodyEl.textContent = text;
+    consumeUsage();
     document.getElementById(cfg.wrap).style.display = 'block';
     document.getElementById(cfg.wrap).scrollIntoView({ behavior:'smooth', block:'start' });
   } catch (e) {
