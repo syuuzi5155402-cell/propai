@@ -200,6 +200,38 @@ footer{text-align:center;padding:24px;font-size:.72rem;color:#b0bac9;}
 .plan-contact-btn.outline:hover{background:#f0f7ff;}
 .pricing-note{text-align:center;font-size:.76rem;color:#94a3b8;margin-top:16px;line-height:1.8;}
 
+/* ── Stripe決済モーダル ── */
+.checkout-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);
+  z-index:300;display:flex;align-items:center;justify-content:center;}
+.checkout-modal{background:#fff;border-radius:16px;padding:32px 28px;
+  width:380px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.checkout-modal-plan{display:inline-block;background:#f1f5ff;color:#3b7ef8;
+  border-radius:6px;padding:3px 10px;font-size:.76rem;font-weight:700;margin-bottom:12px;}
+.checkout-modal-title{font-size:1rem;font-weight:900;margin-bottom:4px;}
+.checkout-modal-sub{font-size:.76rem;color:#94a3b8;margin-bottom:16px;line-height:1.6;}
+.checkout-email-input{width:100%;background:#f8fafc;border:1.5px solid #e4e8f0;
+  border-radius:9px;padding:11px 13px;font-family:inherit;font-size:.9rem;
+  color:#1a2035;transition:border-color .2s;margin-bottom:8px;}
+.checkout-email-input:focus{outline:none;border-color:#3b7ef8;}
+.checkout-error{color:#ef4444;font-size:.76rem;margin-bottom:10px;min-height:16px;}
+.checkout-modal-btns{display:flex;gap:8px;margin-top:4px;}
+.checkout-submit-btn{flex:1;padding:12px;border-radius:9px;border:none;
+  background:linear-gradient(135deg,#3b7ef8,#38d9c0);color:#fff;
+  font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:6px;}
+.checkout-submit-btn:disabled{opacity:.5;cursor:not-allowed;}
+.checkout-cancel-btn{padding:12px 18px;border-radius:9px;border:1.5px solid #e4e8f0;
+  background:#f8fafc;color:#64748b;font-family:inherit;font-size:.9rem;cursor:pointer;}
+.stripe-lock{font-size:.72rem;color:#94a3b8;text-align:center;margin-top:10px;}
+
+/* ── 有料ユーザーバナー ── */
+.paid-banner{background:linear-gradient(135deg,#f0fdf4,#f0f7ff);
+  border:2px solid #86efac;border-radius:14px;padding:18px 24px;
+  display:flex;align-items:center;gap:14px;margin-bottom:20px;}
+.paid-banner-icon{font-size:1.8rem;flex-shrink:0;}
+.paid-banner-text strong{display:block;font-size:.95rem;font-weight:900;color:#16a34a;margin-bottom:2px;}
+.paid-banner-text span{font-size:.8rem;color:#166534;}
+
 /* ── 申込フォーム成功 ── */
 .trial-success{background:#f0fdf4;border:2px solid #86efac;border-radius:16px;
   padding:40px 32px;text-align:center;}
@@ -237,6 +269,15 @@ footer{text-align:center;padding:24px;font-size:.72rem;color:#b0bac9;}
 </div>
 
 <div class="wrap">
+
+  <!-- 有料登録完了バナー（決済後のみ表示） -->
+  <div id="paid-banner" class="paid-banner" style="display:none;">
+    <div class="paid-banner-icon">🎉</div>
+    <div class="paid-banner-text">
+      <strong>ご契約ありがとうございます！</strong>
+      <span>有料プランが有効になりました。すべての機能を制限なくご利用いただけます。</span>
+    </div>
+  </div>
 
   <!-- ホーム -->
   <div id="panel-home" class="panel active">
@@ -551,10 +592,10 @@ footer{text-align:center;padding:24px;font-size:.72rem;color:#b0bac9;}
           <li>月50件まで利用可能</li>
           <li>メールサポート</li>
         </ul>
-        <a class="plan-contact-btn outline"
-          href="mailto:syuuzi5155402@gmail.com?subject=PROPAI STARTERプラン お問い合わせ&body=会社名：%0D%0Aご担当者名：%0D%0Aメールアドレス：%0D%0Aご質問・ご要望：">
-          お問い合わせ
-        </a>
+        <button class="plan-contact-btn outline"
+          onclick="startCheckout('price_1TFOgRFKJt4ODsVHL1iUgSX8','STARTER ¥19,800/月')">
+          申し込む
+        </button>
       </div>
 
       <!-- BUSINESS -->
@@ -570,10 +611,10 @@ footer{text-align:center;padding:24px;font-size:.72rem;color:#b0bac9;}
           <li>SEO記事生成</li>
           <li>優先メールサポート</li>
         </ul>
-        <a class="plan-contact-btn"
-          href="mailto:syuuzi5155402@gmail.com?subject=PROPAI BUSINESSプラン お問い合わせ&body=会社名：%0D%0Aご担当者名：%0D%0Aメールアドレス：%0D%0Aご質問・ご要望：">
-          お問い合わせ
-        </a>
+        <button class="plan-contact-btn"
+          onclick="startCheckout('price_1TFOgRFKJt4ODsVHaDok9LTG','BUSINESS ¥49,800/月')">
+          申し込む
+        </button>
       </div>
 
       <!-- ENTERPRISE -->
@@ -692,6 +733,26 @@ footer{text-align:center;padding:24px;font-size:.72rem;color:#b0bac9;}
   <button class="admin-logout-btn" onclick="adminLogout()">ログアウト</button>
 </div>
 
+<!-- Stripe決済モーダル -->
+<div id="checkout-modal" class="checkout-modal-overlay" style="display:none;" onclick="closeCheckoutOutside(event)">
+  <div class="checkout-modal">
+    <div class="checkout-modal-plan" id="checkout-plan-label"></div>
+    <div class="checkout-modal-title">メールアドレスを入力してください</div>
+    <div class="checkout-modal-sub">領収書の送付・アカウント管理に使用します。<br>支払い後に自動で利用制限が解除されます。</div>
+    <input type="email" id="checkout-email" class="checkout-email-input"
+      placeholder="例：yamada@example.com"
+      onkeydown="if(event.key==='Enter')submitCheckout()">
+    <div id="checkout-error" class="checkout-error"></div>
+    <div class="checkout-modal-btns">
+      <button class="checkout-cancel-btn" onclick="closeCheckoutModal()">キャンセル</button>
+      <button class="checkout-submit-btn" id="checkout-submit-btn" onclick="submitCheckout()">
+        <span id="checkout-btn-label">🔒 Stripe決済ページへ</span>
+      </button>
+    </div>
+    <div class="stripe-lock">🔒 決済はStripeで安全に処理されます。カード情報はPROPAIに送信されません。</div>
+  </div>
+</div>
+
 <!-- 管理者ログインモーダル -->
 <div id="admin-modal" class="admin-modal-overlay" style="display:none;" onclick="closeAdminModalOutside(event)">
   <div class="admin-modal">
@@ -709,6 +770,72 @@ footer{text-align:center;padding:24px;font-size:.72rem;color:#b0bac9;}
 
 <script>
 // =============================================
+// 有料ユーザー管理・Stripe決済
+// =============================================
+const PAID_KEY = 'propai_paid';
+function isPaidUser() { return localStorage.getItem(PAID_KEY) === '1'; }
+
+let _checkoutPriceId = '';
+
+function startCheckout(priceId, planLabel) {
+  _checkoutPriceId = priceId;
+  document.getElementById('checkout-plan-label').textContent = planLabel;
+  document.getElementById('checkout-email').value = '';
+  document.getElementById('checkout-error').textContent = '';
+  document.getElementById('checkout-submit-btn').disabled = false;
+  document.getElementById('checkout-btn-label').textContent = '🔒 Stripe決済ページへ';
+  document.getElementById('checkout-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('checkout-email').focus(), 50);
+}
+function closeCheckoutModal() {
+  document.getElementById('checkout-modal').style.display = 'none';
+}
+function closeCheckoutOutside(e) {
+  if (e.target === document.getElementById('checkout-modal')) closeCheckoutModal();
+}
+
+async function submitCheckout() {
+  const email = document.getElementById('checkout-email').value.trim();
+  if (!email || !email.includes('@')) {
+    document.getElementById('checkout-error').textContent = '有効なメールアドレスを入力してください。';
+    return;
+  }
+  document.getElementById('checkout-error').textContent = '';
+  document.getElementById('checkout-submit-btn').disabled = true;
+  document.getElementById('checkout-btn-label').textContent = '処理中...';
+
+  try {
+    const res = await fetch('/api/create-checkout', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ priceId: _checkoutPriceId, email }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || '決済セッションの作成に失敗しました');
+    window.location.href = data.url;
+  } catch (e) {
+    document.getElementById('checkout-error').textContent = e.message;
+    document.getElementById('checkout-submit-btn').disabled = false;
+    document.getElementById('checkout-btn-label').textContent = '🔒 Stripe決済ページへ';
+  }
+}
+
+// 決済完了後 ?success=true で戻ってきたとき
+(function checkPaymentSuccess() {
+  if (new URLSearchParams(window.location.search).get('success') === 'true') {
+    localStorage.setItem(PAID_KEY, '1');
+    history.replaceState({}, '', window.location.pathname);
+    document.addEventListener('DOMContentLoaded', () => {
+      const banner = document.getElementById('paid-banner');
+      if (banner) banner.style.display = 'flex';
+    });
+    // すでにDOMが読み込まれている場合
+    const banner = document.getElementById('paid-banner');
+    if (banner) banner.style.display = 'flex';
+  }
+})();
+
+// =============================================
 // 利用回数制限
 // =============================================
 const USAGE_KEY   = 'propai_usage';
@@ -724,12 +851,12 @@ function getUsageData() {
 }
 
 function getRemainingUsage() {
-  if (isAdmin()) return Infinity;
+  if (isAdmin() || isPaidUser()) return Infinity;
   return Math.max(0, DAILY_LIMIT - getUsageData().count);
 }
 
 function consumeUsage() {
-  if (isAdmin()) return;
+  if (isAdmin() || isPaidUser()) return;
   const data = getUsageData();
   data.count++;
   localStorage.setItem(USAGE_KEY, JSON.stringify(data));
@@ -739,6 +866,12 @@ function consumeUsage() {
 function updateUsageBadge() {
   const badge = document.getElementById('usage-badge');
   if (isAdmin()) { badge.style.display = 'none'; return; }
+  if (isPaidUser()) {
+    badge.style.display = '';
+    badge.className = 'usage-badge';
+    badge.innerHTML = '✅ 有料プラン（制限なし）';
+    return;
+  }
   const rem = getRemainingUsage();
   badge.style.display = '';
   badge.className = 'usage-badge' + (rem <= 3 ? ' low' : '');
