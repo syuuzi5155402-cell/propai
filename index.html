@@ -224,6 +224,11 @@ footer{text-align:center;padding:24px;font-size:.72rem;color:#b0bac9;}
   background:#f8fafc;color:#64748b;font-family:inherit;font-size:.9rem;cursor:pointer;}
 .stripe-lock{font-size:.72rem;color:#94a3b8;text-align:center;margin-top:10px;}
 
+/* ── MLIT分析 ── */
+.mlit-status{font-size:.8rem;color:#3b7ef8;padding:8px 0;min-height:24px;display:flex;align-items:center;gap:6px;}
+.mlit-citation{font-size:.72rem;color:#94a3b8;margin-top:12px;padding-top:10px;border-top:1px solid #f1f5f9;text-align:right;}
+select:disabled{opacity:.6;cursor:not-allowed;}
+
 /* ── 有料ユーザーバナー ── */
 .paid-banner{background:linear-gradient(135deg,#f0fdf4,#f0f7ff);
   border:2px solid #86efac;border-radius:14px;padding:18px 24px;
@@ -375,17 +380,50 @@ footer{text-align:center;padding:24px;font-size:.72rem;color:#b0bac9;}
     <div class="card">
       <div class="step-label">
         <div class="step-num">1</div>
-        <div class="step-text">物件の情報を入力してください</div>
+        <div class="step-text">エリアと物件情報を入力してください</div>
       </div>
-      <div class="field"><label>所在地</label>
-        <input type="text" id="a-address" placeholder="例：東京都渋谷区代々木2丁目"></div>
+      <div class="field-row">
+        <div class="field"><label>都道府県</label>
+          <select id="a-pref" onchange="loadCities()">
+            <option value="">-- 選択してください --</option>
+            <option value="01">北海道</option><option value="02">青森県</option>
+            <option value="03">岩手県</option><option value="04">宮城県</option>
+            <option value="05">秋田県</option><option value="06">山形県</option>
+            <option value="07">福島県</option><option value="08">茨城県</option>
+            <option value="09">栃木県</option><option value="10">群馬県</option>
+            <option value="11">埼玉県</option><option value="12">千葉県</option>
+            <option value="13">東京都</option><option value="14">神奈川県</option>
+            <option value="15">新潟県</option><option value="16">富山県</option>
+            <option value="17">石川県</option><option value="18">福井県</option>
+            <option value="19">山梨県</option><option value="20">長野県</option>
+            <option value="21">岐阜県</option><option value="22">静岡県</option>
+            <option value="23">愛知県</option><option value="24">三重県</option>
+            <option value="25">滋賀県</option><option value="26">京都府</option>
+            <option value="27">大阪府</option><option value="28">兵庫県</option>
+            <option value="29">奈良県</option><option value="30">和歌山県</option>
+            <option value="31">鳥取県</option><option value="32">島根県</option>
+            <option value="33">岡山県</option><option value="34">広島県</option>
+            <option value="35">山口県</option><option value="36">徳島県</option>
+            <option value="37">香川県</option><option value="38">愛媛県</option>
+            <option value="39">高知県</option><option value="40">福岡県</option>
+            <option value="41">佐賀県</option><option value="42">長崎県</option>
+            <option value="43">熊本県</option><option value="44">大分県</option>
+            <option value="45">宮崎県</option><option value="46">鹿児島県</option>
+            <option value="47">沖縄県</option>
+          </select></div>
+        <div class="field"><label>市区町村</label>
+          <select id="a-city" disabled>
+            <option value="">-- 都道府県を先に選択 --</option>
+          </select></div>
+      </div>
       <div class="field-row">
         <div class="field"><label>物件種別</label>
           <select id="a-type">
-            <option>マンション</option><option>一戸建て</option>
-            <option>アパート</option><option>土地</option><option>収益ビル</option>
+            <option value="2">中古マンション等</option>
+            <option value="1">土地</option>
+            <option value="3">新築マンション</option>
           </select></div>
-        <div class="field"><label>価格・賃料</label>
+        <div class="field"><label>価格・賃料（任意）</label>
           <input type="text" id="a-price" placeholder="例：4,500万円 / 月15万円"></div>
       </div>
       <div class="field-row">
@@ -401,6 +439,7 @@ footer{text-align:center;padding:24px;font-size:.72rem;color:#b0bac9;}
         <div class="step-text">ボタンを押してください</div>
       </div>
       <button class="run-btn" id="a-btn" onclick="runAgent('analysis')">🔍 物件を分析する</button>
+      <div id="a-mlit-status" class="mlit-status"></div>
       <div id="a-error"></div>
     </div>
     <div id="a-result-wrap" style="display:none;">
@@ -410,6 +449,7 @@ footer{text-align:center;padding:24px;font-size:.72rem;color:#b0bac9;}
           <button class="output-copy" id="a-copy" onclick="copyOutput('a-body','a-copy')">コピー</button>
         </div>
         <div class="output-body" id="a-body"></div>
+        <div class="mlit-citation">※国土交通省不動産取引価格情報をもとにAIが分析</div>
       </div>
     </div>
   </div>
@@ -1121,28 +1161,113 @@ function copyPatternText(idx) {
 }
 
 // =============================================
+// 市区町村ローディング（MLIT API）
+// =============================================
+async function loadCities() {
+  const pref = document.getElementById('a-pref').value;
+  const citySelect = document.getElementById('a-city');
+  if (!pref) {
+    citySelect.innerHTML = '<option value="">-- 都道府県を先に選択 --</option>';
+    citySelect.disabled = true;
+    return;
+  }
+  citySelect.innerHTML = '<option value="">読み込み中...</option>';
+  citySelect.disabled = true;
+  try {
+    const res = await fetch(`/api/mlit?mode=cities&area=${pref}`);
+    const data = await res.json();
+    if (data.data && data.data.length > 0) {
+      citySelect.innerHTML = '<option value="">-- 市区町村を選択 --</option>' +
+        data.data.map(c => `<option value="${escHtml(c.id)}">${escHtml(c.name)}</option>`).join('');
+      citySelect.disabled = false;
+    } else {
+      citySelect.innerHTML = '<option value="">データがありません</option>';
+    }
+  } catch {
+    citySelect.innerHTML = '<option value="">取得に失敗しました</option>';
+  }
+}
+
+// =============================================
 // 汎用エージェント実行
 // =============================================
 const agentConfig = {
   analysis: {
     btn:'a-btn', err:'a-error', wrap:'a-result-wrap', body:'a-body', copy:'a-copy',
     label:'🔍 物件を分析する',
-    validate: () => !v('a-address') ? '所在地を入力してください。' : null,
-    system: `あなたは不動産鑑定・投資分析の専門家です。入力された物件情報をもとに、以下の構成で詳細な分析レポートを日本語で作成してください。
+    validate: () => {
+      if (!document.getElementById('a-pref').value) return '都道府県を選択してください。';
+      if (!document.getElementById('a-city').value) return '市区町村を選択してください。';
+      return null;
+    },
+    fetchData: async () => {
+      const city     = document.getElementById('a-city').value;
+      const propType = document.getElementById('a-type').value;
+      const statusEl = document.getElementById('a-mlit-status');
+      statusEl.textContent = '📡 国土交通省APIからデータを取得中...';
+      try {
+        const res  = await fetch(`/api/mlit?mode=trades&city=${city}&propType=${propType}`);
+        const data = await res.json();
+        statusEl.textContent = data.data?.length > 0
+          ? `✅ ${data.data.length}件の取引データを取得しました`
+          : '⚠️ 直近の取引データが見つかりませんでした';
+        return data;
+      } catch {
+        statusEl.textContent = '⚠️ データ取得に失敗しました（AI分析で続行）';
+        return null;
+      }
+    },
+    system: `あなたは不動産鑑定・投資分析の専門家です。国土交通省の不動産取引価格情報と入力された物件情報をもとに、以下の構成で詳細な分析レポートを日本語で作成してください。
 【構成】
-1. 相場比較（周辺の類似物件との比較・坪単価評価）
+1. 相場比較（実際の成約データにもとづく坪単価・平均価格の分析）
 2. 投資利回り試算（表面利回り・実質利回り）
 3. リスク評価（立地・流動性・金利・価格下落）
 4. 総評
 5. 推奨アクション
-絵文字や記号を使い、見やすい形式で出力してください。`,
-    buildPrompt: () => {
-      const addr   = v('a-address');
-      const type   = v('a-type')   || 'マンション';
+絵文字や記号を使い、見やすい形式で出力してください。実データがある場合は具体的な数値を引用してください。`,
+    buildPrompt: (mlitData) => {
+      const prefName = document.getElementById('a-pref').selectedOptions[0]?.text || '';
+      const cityName = document.getElementById('a-city').selectedOptions[0]?.text || '';
+      const typeName = document.getElementById('a-type').selectedOptions[0]?.text || '';
       const price  = v('a-price')  || '未入力';
       const detail = v('a-detail') || '未入力';
       const note   = v('a-note')   || 'なし';
-      return `【物件情報】\n所在地：${addr}\n物件種別：${type}\n価格・賃料：${price}\n築年数・面積：${detail}\nその他メモ：${note}`;
+
+      let dataSection = '【注意】指定エリア・種別の直近取引データが見つかりませんでした。一般的な相場情報をもとに分析します。';
+      if (mlitData && mlitData.data && mlitData.data.length > 0) {
+        const records  = mlitData.data;
+        const prices   = records.map(r => parseInt(r.TradePrice)).filter(p => p > 0);
+        const areas    = records.map(r => parseFloat(r.Area)).filter(a => a > 0);
+        const avgPrice = prices.length ? Math.round(prices.reduce((a,b)=>a+b,0)/prices.length/10000) : 0;
+        const minPrice = prices.length ? Math.round(Math.min(...prices)/10000) : 0;
+        const maxPrice = prices.length ? Math.round(Math.max(...prices)/10000) : 0;
+        const avgArea  = areas.length  ? Math.round(areas.reduce((a,b)=>a+b,0)/areas.length) : 0;
+        const samples  = records.slice(0,10).map(r => {
+          const p = Math.round(parseInt(r.TradePrice||0)/10000);
+          return `・${r.Period||''} ${p}万円 ${r.Area||''}㎡ ${r.FloorPlan||''} ${r.BuildingYear ? r.BuildingYear+'年建' : ''}`.trim();
+        }).join('\n');
+        dataSection =
+`【国土交通省 不動産取引価格情報（直近データ）】
+対象エリア：${prefName} ${cityName}
+物件種別：${typeName}
+取引件数：${records.length}件
+平均成約価格：${avgPrice}万円
+最低成約価格：${minPrice}万円
+最高成約価格：${maxPrice}万円
+${avgArea > 0 ? `平均面積：${avgArea}㎡` : ''}
+
+【取引サンプル（最新10件）】
+${samples}`;
+      }
+
+      return `${dataSection}
+
+【分析対象物件情報】
+所在地：${prefName} ${cityName}
+物件種別：${typeName}
+価格・賃料：${price}
+築年数・面積：${detail}
+その他：${note}`;
     },
   },
   docs: {
@@ -1243,13 +1368,19 @@ async function runAgent(type) {
   setBtnLoading(cfg.btn, null, true, cfg.label);
   document.getElementById(cfg.wrap).style.display = 'none';
 
+  // MLIT等の事前データ取得（analysis タブのみ使用）
+  let fetchedData = null;
+  if (cfg.fetchData) {
+    fetchedData = await cfg.fetchData();
+  }
+
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         system: cfg.system,
-        messages: [{ role: 'user', content: cfg.buildPrompt() }],
+        messages: [{ role: 'user', content: cfg.buildPrompt(fetchedData) }],
       }),
     });
     if (!res.ok) {
