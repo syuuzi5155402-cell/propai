@@ -1179,12 +1179,13 @@ async function loadCities() {
     if (data.data && data.data.length > 0) {
       citySelect.innerHTML = '<option value="">-- 市区町村を選択 --</option>' +
         data.data.map(c => `<option value="${escHtml(c.id)}">${escHtml(c.name)}</option>`).join('');
-      citySelect.disabled = false;
     } else {
-      citySelect.innerHTML = '<option value="">データがありません</option>';
+      citySelect.innerHTML = '<option value="">データがありません（都道府県を選び直してください）</option>';
     }
   } catch {
-    citySelect.innerHTML = '<option value="">取得に失敗しました</option>';
+    citySelect.innerHTML = '<option value="">取得に失敗しました（再度選択してください）</option>';
+  } finally {
+    citySelect.disabled = false;
   }
 }
 
