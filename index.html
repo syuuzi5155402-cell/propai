@@ -384,7 +384,7 @@ select:disabled{opacity:.6;cursor:not-allowed;}
       </div>
       <div class="field-row">
         <div class="field"><label>都道府県</label>
-          <select id="a-pref" onchange="loadCities()">
+          <select id="a-pref">
             <option value="">-- 選択してください --</option>
             <option value="01">北海道</option><option value="02">青森県</option>
             <option value="03">岩手県</option><option value="04">宮城県</option>
@@ -411,10 +411,8 @@ select:disabled{opacity:.6;cursor:not-allowed;}
             <option value="45">宮崎県</option><option value="46">鹿児島県</option>
             <option value="47">沖縄県</option>
           </select></div>
-        <div class="field"><label>市区町村</label>
-          <select id="a-city" disabled>
-            <option value="">-- 都道府県を先に選択 --</option>
-          </select></div>
+        <div class="field"><label>市区町村・エリア</label>
+          <input type="text" id="a-city" placeholder="例：渋谷区、仙台市青葉区"></div>
       </div>
       <div class="field-row">
         <div class="field"><label>物件種別</label>
@@ -439,7 +437,6 @@ select:disabled{opacity:.6;cursor:not-allowed;}
         <div class="step-text">ボタンを押してください</div>
       </div>
       <button class="run-btn" id="a-btn" onclick="runAgent('analysis')">🔍 物件を分析する</button>
-      <div id="a-mlit-status" class="mlit-status"></div>
       <div id="a-error"></div>
     </div>
     <div id="a-result-wrap" style="display:none;">
@@ -1161,35 +1158,6 @@ function copyPatternText(idx) {
 }
 
 // =============================================
-// 市区町村ローディング（MLIT API）
-// =============================================
-async function loadCities() {
-  const pref = document.getElementById('a-pref').value;
-  const citySelect = document.getElementById('a-city');
-  if (!pref) {
-    citySelect.innerHTML = '<option value="">-- 都道府県を先に選択 --</option>';
-    citySelect.disabled = true;
-    return;
-  }
-  citySelect.innerHTML = '<option value="">読み込み中...</option>';
-  citySelect.disabled = true;
-  try {
-    const res = await fetch(`/api/mlit?mode=cities&area=${pref}`);
-    const data = await res.json();
-    if (data.data && data.data.length > 0) {
-      citySelect.innerHTML = '<option value="">-- 市区町村を選択 --</option>' +
-        data.data.map(c => `<option value="${escHtml(c.id)}">${escHtml(c.name)}</option>`).join('');
-    } else {
-      citySelect.innerHTML = '<option value="">データがありません（都道府県を選び直してください）</option>';
-    }
-  } catch {
-    citySelect.innerHTML = '<option value="">取得に失敗しました（再度選択してください）</option>';
-  } finally {
-    citySelect.disabled = false;
-  }
-}
-
-// =============================================
 // 汎用エージェント実行
 // =============================================
 const agentConfig = {
@@ -1198,83 +1166,25 @@ const agentConfig = {
     label:'🔍 物件を分析する',
     validate: () => {
       if (!document.getElementById('a-pref').value) return '都道府県を選択してください。';
-      if (!document.getElementById('a-city').value) return '市区町村を選択してください。';
+      if (!v('a-city')) return '市区町村・エリアを入力してください。';
       return null;
     },
-    fetchData: async () => {
-      const city     = document.getElementById('a-city').value;
-      const propType = document.getElementById('a-type').value;
-      const statusEl = document.getElementById('a-mlit-status');
-      statusEl.textContent = '📡 国土交通省APIからデータを取得中...';
-      // 直近1年分（前年同四半期〜現在）
-      const now = new Date();
-      const cy  = now.getFullYear(), cq = Math.ceil((now.getMonth()+1)/3);
-      const from = `${cy-1}${cq}`, to = `${cy}${cq}`;
-      try {
-        const res  = await fetch(
-          `/api/mlit?mode=trades&city=${city}&propType=${propType}`
-        );
-        const data = await res.json();
-        statusEl.textContent = data.data?.length > 0
-          ? `✅ ${data.data.length}件の取引データを取得しました`
-          : '⚠️ 直近の取引データが見つかりませんでした';
-        return data;
-      } catch {
-        statusEl.textContent = '⚠️ データ取得に失敗しました（AI分析で続行）';
-        return null;
-      }
-    },
-    system: `あなたは不動産鑑定・投資分析の専門家です。国土交通省の不動産取引価格情報と入力された物件情報をもとに、以下の構成で詳細な分析レポートを日本語で作成してください。
+    system: `あなたは不動産鑑定・投資分析の専門家です。入力された物件情報をもとに、以下の構成で詳細な分析レポートを日本語で作成してください。
 【構成】
-1. 相場比較（実際の成約データにもとづく坪単価・平均価格の分析）
+1. 相場比較（周辺の類似物件との比較・坪単価評価）
 2. 投資利回り試算（表面利回り・実質利回り）
 3. リスク評価（立地・流動性・金利・価格下落）
 4. 総評
 5. 推奨アクション
-絵文字や記号を使い、見やすい形式で出力してください。実データがある場合は具体的な数値を引用してください。`,
-    buildPrompt: (mlitData) => {
+絵文字や記号を使い、見やすい形式で出力してください。`,
+    buildPrompt: () => {
       const prefName = document.getElementById('a-pref').selectedOptions[0]?.text || '';
-      const cityName = document.getElementById('a-city').selectedOptions[0]?.text || '';
+      const cityName = v('a-city');
       const typeName = document.getElementById('a-type').selectedOptions[0]?.text || '';
       const price  = v('a-price')  || '未入力';
       const detail = v('a-detail') || '未入力';
       const note   = v('a-note')   || 'なし';
-
-      let dataSection = '【注意】指定エリア・種別の直近取引データが見つかりませんでした。一般的な相場情報をもとに分析します。';
-      if (mlitData && mlitData.data && mlitData.data.length > 0) {
-        const records  = mlitData.data;
-        const prices   = records.map(r => parseInt(r.TradePrice)).filter(p => p > 0);
-        const areas    = records.map(r => parseFloat(r.Area)).filter(a => a > 0);
-        const avgPrice = prices.length ? Math.round(prices.reduce((a,b)=>a+b,0)/prices.length/10000) : 0;
-        const minPrice = prices.length ? Math.round(Math.min(...prices)/10000) : 0;
-        const maxPrice = prices.length ? Math.round(Math.max(...prices)/10000) : 0;
-        const avgArea  = areas.length  ? Math.round(areas.reduce((a,b)=>a+b,0)/areas.length) : 0;
-        const samples  = records.slice(0,10).map(r => {
-          const p = Math.round(parseInt(r.TradePrice||0)/10000);
-          return `・${r.Period||''} ${p}万円 ${r.Area||''}㎡ ${r.FloorPlan||''} ${r.BuildingYear ? r.BuildingYear+'年建' : ''}`.trim();
-        }).join('\n');
-        dataSection =
-`【国土交通省 不動産取引価格情報（直近データ）】
-対象エリア：${prefName} ${cityName}
-物件種別：${typeName}
-取引件数：${records.length}件
-平均成約価格：${avgPrice}万円
-最低成約価格：${minPrice}万円
-最高成約価格：${maxPrice}万円
-${avgArea > 0 ? `平均面積：${avgArea}㎡` : ''}
-
-【取引サンプル（最新10件）】
-${samples}`;
-      }
-
-      return `${dataSection}
-
-【分析対象物件情報】
-所在地：${prefName} ${cityName}
-物件種別：${typeName}
-価格・賃料：${price}
-築年数・面積：${detail}
-その他：${note}`;
+      return `【物件情報】\n所在地：${prefName} ${cityName}\n物件種別：${typeName}\n価格・賃料：${price}\n築年数・面積：${detail}\nその他メモ：${note}`;
     },
   },
   docs: {
