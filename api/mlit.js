@@ -1,61 +1,68 @@
+const MLIT_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'Accept': 'application/json, text/plain, */*',
+  'Accept-Language': 'ja,en-US;q=0.9',
+  'Referer': 'https://www.land.mlit.go.jp/webland/servlet/MainServlet',
+  'Origin': 'https://www.land.mlit.go.jp',
+};
+
 export default async function handler(req, res) {
+  // フロントからの CORS を許可
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET');
+
   if (req.method !== 'GET') {
-    return res.status(405).json({ error: { message: 'Method Not Allowed' } });
+    return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
   const { mode, area, city, propType } = req.query;
 
   if (mode === 'cities') {
-    if (!area) {
-      return res.status(400).json({ error: { message: 'area パラメータが必要です' } });
-    }
+    if (!area) return res.status(400).json({ error: 'area パラメータが必要です' });
+
+    const url = `https://www.land.mlit.go.jp/webland/api/CitySearch?area=${encodeURIComponent(area)}`;
     try {
-      const url = `https://www.land.mlit.go.jp/webland/api/CitySearch?area=${encodeURIComponent(area)}`;
-      const response = await fetch(url);
-      const data = await response.json();
+      const response = await fetch(url, { headers: MLIT_HEADERS });
+      const text = await response.text();
+
+      let data;
+      try { data = JSON.parse(text); } catch {
+        return res.status(502).json({ error: 'MLIT API から不正なレスポンス', raw: text.slice(0, 300) });
+      }
+
       return res.status(200).json(data);
     } catch (err) {
-      return res.status(500).json({ error: { message: err.message || '市区町村取得に失敗しました' } });
+      return res.status(502).json({ error: err.message || '市区町村取得に失敗しました' });
     }
   }
 
   if (mode === 'trades') {
-    if (!city) {
-      return res.status(400).json({ error: { message: 'city パラメータが必要です' } });
-    }
+    if (!city) return res.status(400).json({ error: 'city パラメータが必要です' });
 
-    // Calculate dynamic date range: from = 1 year ago quarter, to = current quarter
-    // Format: YYYYQ (e.g., 20251 = 2025 Q1)
     const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth() + 1; // 1-12
-    const currentQuarter = Math.ceil(currentMonth / 3); // 1-4
+    const cy  = now.getFullYear();
+    const cq  = Math.ceil((now.getMonth() + 1) / 3);
+    const from = `${cy - 1}${cq}`;
+    const to   = `${cy}${cq}`;
 
-    // One year ago
-    const fromYear = currentYear - 1;
-    const fromQuarter = currentQuarter;
+    const params = new URLSearchParams({ from, to, city });
+    if (propType) params.set('type', propType);
 
-    const from = `${fromYear}${fromQuarter}`;
-    const to = `${currentYear}${currentQuarter}`;
-
+    const url = `https://www.land.mlit.go.jp/webland/api/TradeListSearch?${params}`;
     try {
-      const params = new URLSearchParams({
-        from,
-        to,
-        city,
-      });
-      if (propType) {
-        params.set('type', propType);
+      const response = await fetch(url, { headers: MLIT_HEADERS });
+      const text = await response.text();
+
+      let data;
+      try { data = JSON.parse(text); } catch {
+        return res.status(502).json({ error: 'MLIT API から不正なレスポンス', raw: text.slice(0, 300) });
       }
 
-      const url = `https://www.land.mlit.go.jp/webland/api/TradeListSearch?${params.toString()}`;
-      const response = await fetch(url);
-      const data = await response.json();
       return res.status(200).json(data);
     } catch (err) {
-      return res.status(500).json({ error: { message: err.message || '取引データ取得に失敗しました' } });
+      return res.status(502).json({ error: err.message || '取引データ取得に失敗しました' });
     }
   }
 
-  return res.status(400).json({ error: { message: '不正な mode パラメータです' } });
+  return res.status(400).json({ error: '不正な mode パラメータです' });
 }
