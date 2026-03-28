@@ -200,6 +200,48 @@ footer{text-align:center;padding:24px;font-size:.72rem;color:#b0bac9;}
 .plan-contact-btn.outline:hover{background:#f0f7ff;}
 .pricing-note{text-align:center;font-size:.76rem;color:#94a3b8;margin-top:16px;line-height:1.8;}
 
+/* ── 一括査定 ── */
+.agency-table{width:100%;border-collapse:collapse;font-size:.82rem;margin-top:10px;}
+.agency-table th{background:#f8fafc;color:#64748b;font-weight:700;padding:8px 10px;
+  text-align:left;border-bottom:2px solid #e4e8f0;}
+.agency-table td{padding:9px 10px;border-bottom:1px solid #f1f5f9;color:#334155;vertical-align:middle;}
+.agency-table tr:last-child td{border-bottom:none;}
+.agency-del-btn{background:none;border:1px solid #fca5a5;border-radius:5px;
+  color:#ef4444;font-size:.72rem;padding:3px 8px;cursor:pointer;font-family:inherit;}
+.agency-del-btn:hover{background:#fef2f2;}
+.agency-empty{text-align:center;color:#b0bac9;font-size:.82rem;padding:20px;}
+.agency-check-list{display:flex;flex-direction:column;gap:8px;margin:10px 0;}
+.agency-check-item{display:flex;align-items:center;gap:10px;padding:10px 12px;
+  background:#f8fafc;border:1.5px solid #e4e8f0;border-radius:9px;cursor:pointer;
+  transition:border-color .2s;}
+.agency-check-item:hover{border-color:#3b7ef8;}
+.agency-check-item input[type=checkbox]{width:16px;height:16px;accent-color:#3b7ef8;cursor:pointer;}
+.agency-check-label{font-size:.85rem;color:#1a2035;font-weight:500;}
+.agency-check-sub{font-size:.74rem;color:#94a3b8;margin-left:auto;}
+.select-all-btn{background:#f1f5ff;border:1.5px solid #d0dcff;border-radius:7px;
+  padding:6px 14px;color:#3b7ef8;font-family:inherit;font-size:.78rem;font-weight:700;
+  cursor:pointer;transition:all .2s;}
+.select-all-btn:hover{background:#3b7ef8;color:#fff;border-color:#3b7ef8;}
+.mail-result-card{background:#fff;border:1.5px solid #e4e8f0;border-radius:12px;
+  padding:18px 20px;margin-bottom:12px;}
+.mail-result-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.mail-result-agency{font-size:.85rem;font-weight:700;color:#1a2035;}
+.mail-result-email{font-size:.74rem;color:#94a3b8;}
+.mail-result-body{font-size:.84rem;line-height:1.9;color:#334155;
+  white-space:pre-wrap;background:#f8fafc;border-radius:8px;padding:12px 14px;margin-bottom:10px;}
+.mail-send-btn{background:linear-gradient(135deg,#3b7ef8,#38d9c0);color:#fff;
+  border:none;border-radius:8px;padding:8px 18px;font-family:inherit;
+  font-size:.8rem;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block;}
+.mail-send-btn:hover{opacity:.88;}
+.bulk-send-bar{background:#f8fbff;border:1.5px solid #d0dcff;border-radius:12px;
+  padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-top:4px;flex-wrap:wrap;}
+.bulk-send-info{font-size:.82rem;color:#64748b;}
+.bulk-send-btn{background:linear-gradient(135deg,#3b7ef8,#38d9c0);color:#fff;
+  border:none;border-radius:9px;padding:11px 24px;font-family:inherit;
+  font-size:.9rem;font-weight:700;cursor:pointer;}
+.bulk-send-btn:hover{opacity:.88;}
+
 /* ── Stripe決済モーダル ── */
 .checkout-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);
   z-index:300;display:flex;align-items:center;justify-content:center;}
@@ -268,6 +310,7 @@ select:disabled{opacity:.6;cursor:not-allowed;}
     <button class="tab" onclick="switchTab('report')">📈 市場レポート</button>
     <button class="tab" onclick="switchTab('sns')">📱 SNS投稿</button>
     <button class="tab" onclick="switchTab('seo')">✍️ SEO記事生成</button>
+    <button class="tab" onclick="switchTab('appraisal')">🏢 一括査定</button>
     <button class="tab" onclick="switchTab('pricing')">💰 料金プラン</button>
     <button class="tab" onclick="switchTab('trial')">📋 無料トライアル申込</button>
   </div>
@@ -323,6 +366,11 @@ select:disabled{opacity:.6;cursor:not-allowed;}
         <div class="agent-icon">✍️</div>
         <div class="agent-name">SEO記事生成</div>
         <div class="agent-desc">キーワードから集客記事を自動生成</div>
+      </div>
+      <div class="agent-card" onclick="switchTab('appraisal')">
+        <div class="agent-icon">🏢</div>
+        <div class="agent-name">一括査定送付</div>
+        <div class="agent-desc">登録業者へAI生成メールを一括送付</div>
       </div>
       <div class="agent-card" onclick="switchTab('trial')" style="border-color:#3b7ef8;background:linear-gradient(135deg,#f0f7ff,#f0fef9);">
         <div class="agent-icon">🎉</div>
@@ -679,6 +727,113 @@ select:disabled{opacity:.6;cursor:not-allowed;}
     </div>
   </div>
 
+  <!-- ── 一括査定 ── -->
+  <div id="panel-appraisal" class="panel">
+
+    <!-- 業者登録 -->
+    <div class="card">
+      <div class="step-label">
+        <div class="step-num">1</div>
+        <div class="step-text">査定業者を登録してください</div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>業者名<span class="required-mark">*</span></label>
+          <input type="text" id="ag-company" placeholder="例：〇〇不動産"></div>
+        <div class="field"><label>担当者名<span class="required-mark">*</span></label>
+          <input type="text" id="ag-contact" placeholder="例：田中 太郎"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>メールアドレス<span class="required-mark">*</span></label>
+          <input type="email" id="ag-email" placeholder="例：tanaka@example.com"></div>
+        <div class="field"><label>対応エリア（任意）</label>
+          <input type="text" id="ag-area" placeholder="例：東京都・神奈川県"></div>
+      </div>
+      <div class="field"><label>備考（任意）</label>
+        <input type="text" id="ag-note" placeholder="例：マンション得意・レスポンス早い"></div>
+      <div id="ag-error" style="margin-top:6px;"></div>
+      <button class="run-btn" style="margin-top:12px;" onclick="saveAgency()">
+        ＋ 業者を登録する
+      </button>
+    </div>
+
+    <!-- 業者一覧 -->
+    <div class="card">
+      <div class="step-label">
+        <div class="step-num">2</div>
+        <div class="step-text">登録済み業者一覧</div>
+      </div>
+      <div id="agency-list-wrap">
+        <div class="agency-empty">業者が登録されていません</div>
+      </div>
+    </div>
+
+    <!-- 査定依頼送付 -->
+    <div class="card">
+      <div class="step-label">
+        <div class="step-num">3</div>
+        <div class="step-text">査定依頼の物件情報を入力してください</div>
+      </div>
+      <div class="field"><label>物件所在地<span class="required-mark">*</span></label>
+        <input type="text" id="ap-address" placeholder="例：東京都渋谷区代々木2丁目3番"></div>
+      <div class="field-row">
+        <div class="field"><label>物件種別</label>
+          <select id="ap-type">
+            <option>マンション</option><option>一戸建て</option><option>土地</option>
+          </select></div>
+        <div class="field"><label>専有面積・土地面積</label>
+          <input type="text" id="ap-area" placeholder="例：75㎡ / 120㎡"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>築年数</label>
+          <input type="text" id="ap-age" placeholder="例：築18年（2007年築）"></div>
+        <div class="field"><label>売主様のご要望（任意）</label>
+          <input type="text" id="ap-wish" placeholder="例：6ヶ月以内に売却希望"></div>
+      </div>
+    </div>
+
+    <!-- 業者選択 -->
+    <div class="card">
+      <div class="step-label">
+        <div class="step-num">4</div>
+        <div class="step-text">送付先の業者を選択してください</div>
+      </div>
+      <div style="margin-bottom:10px;">
+        <button class="select-all-btn" onclick="selectAllAgencies()">全選択</button>
+      </div>
+      <div id="ap-agency-checks" class="agency-check-list">
+        <div class="agency-empty">業者が登録されていません（STEP1で登録してください）</div>
+      </div>
+    </div>
+
+    <!-- 生成・送付 -->
+    <div class="card">
+      <div class="step-label">
+        <div class="step-num">5</div>
+        <div class="step-text">メールを生成して送付してください</div>
+      </div>
+      <button class="run-btn" id="ap-btn" onclick="runBulkAppraisal()">
+        <span id="ap-btn-label">✉️ 査定依頼メールを生成する</span>
+      </button>
+      <div id="ap-error"></div>
+    </div>
+
+    <!-- 生成結果 -->
+    <div id="ap-result-wrap" style="display:none;">
+      <div class="card" style="border-color:#3b7ef8;background:#f8fbff;">
+        <div class="step-label" style="justify-content:center;">
+          <div class="step-num">6</div>
+          <div class="step-text">生成されたメールを確認して送付してください</div>
+        </div>
+        <div id="ap-mail-list"></div>
+        <div id="ap-bulk-bar" class="bulk-send-bar" style="margin-top:12px;">
+          <div class="bulk-send-info" id="ap-bulk-info"></div>
+          <button class="bulk-send-btn" onclick="bulkSendAll()">📨 一括送付する</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
   <!-- ── SEO記事生成 ── -->
   <div id="panel-seo" class="panel">
     <div class="card">
@@ -974,7 +1129,7 @@ function updateAdminBar() {
 // =============================================
 // タブ切り替え
 // =============================================
-const TABS = ['home','reply','analysis','docs','check','report','sns','seo','pricing','trial'];
+const TABS = ['home','reply','analysis','docs','check','report','sns','seo','appraisal','pricing','trial'];
 function switchTab(id) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -1350,6 +1505,189 @@ async function submitTrial(event) {
     showError('trial-error', `送信に失敗しました。しばらく待ってから再度お試しください。\n詳細：${e.message}`);
     setBtnLoading('trial-btn', 'trial-btn-label', false, '🎉 無料で試したい');
   }
+}
+
+// =============================================
+// 一括査定
+// =============================================
+const AGENCY_KEY = 'propai_agencies';
+let _appraisalMails = []; // { agency, subject, body }
+
+function getAgencies() {
+  try { return JSON.parse(localStorage.getItem(AGENCY_KEY) || '[]'); } catch { return []; }
+}
+function saveAgencies(list) {
+  localStorage.setItem(AGENCY_KEY, JSON.stringify(list));
+}
+
+function saveAgency() {
+  const company = v('ag-company');
+  const contact = v('ag-contact');
+  const email   = v('ag-email');
+  const area    = v('ag-area');
+  const note    = v('ag-note');
+  clearError('ag-error');
+  if (!company) { showError('ag-error', '業者名を入力してください。'); return; }
+  if (!contact) { showError('ag-error', '担当者名を入力してください。'); return; }
+  if (!email || !email.includes('@')) { showError('ag-error', '有効なメールアドレスを入力してください。'); return; }
+
+  const agencies = getAgencies();
+  agencies.push({ id: Date.now(), company, contact, email, area, note });
+  saveAgencies(agencies);
+
+  // フォームクリア
+  ['ag-company','ag-contact','ag-email','ag-area','ag-note'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  renderAgencyList();
+  renderAgencyChecks();
+}
+
+function deleteAgency(id) {
+  saveAgencies(getAgencies().filter(a => a.id !== id));
+  renderAgencyList();
+  renderAgencyChecks();
+}
+
+function renderAgencyList() {
+  const wrap = document.getElementById('agency-list-wrap');
+  const list = getAgencies();
+  if (!list.length) {
+    wrap.innerHTML = '<div class="agency-empty">業者が登録されていません</div>';
+    return;
+  }
+  wrap.innerHTML = `<table class="agency-table">
+    <thead><tr><th>業者名</th><th>担当者</th><th>メール</th><th>エリア</th><th></th></tr></thead>
+    <tbody>${list.map(a => `
+      <tr>
+        <td>${escHtml(a.company)}</td>
+        <td>${escHtml(a.contact)}</td>
+        <td style="font-size:.76rem;">${escHtml(a.email)}</td>
+        <td style="font-size:.76rem;">${escHtml(a.area||'—')}</td>
+        <td><button class="agency-del-btn" onclick="deleteAgency(${a.id})">削除</button></td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+
+function renderAgencyChecks() {
+  const wrap = document.getElementById('ap-agency-checks');
+  const list = getAgencies();
+  if (!list.length) {
+    wrap.innerHTML = '<div class="agency-empty">業者が登録されていません（STEP1で登録してください）</div>';
+    return;
+  }
+  wrap.innerHTML = list.map(a => `
+    <label class="agency-check-item">
+      <input type="checkbox" class="ap-agency-cb" value="${a.id}" checked>
+      <span class="agency-check-label">${escHtml(a.company)} <span style="color:#64748b;font-weight:400;">/ ${escHtml(a.contact)}様</span></span>
+      <span class="agency-check-sub">${escHtml(a.email)}</span>
+    </label>`).join('');
+}
+
+function selectAllAgencies() {
+  document.querySelectorAll('.ap-agency-cb').forEach(cb => { cb.checked = true; });
+}
+
+// ページ読み込み時に一覧を初期化
+document.addEventListener('DOMContentLoaded', () => {
+  renderAgencyList();
+  renderAgencyChecks();
+});
+
+async function runBulkAppraisal() {
+  clearError('ap-error');
+  const address = v('ap-address');
+  if (!address) { showError('ap-error', '物件所在地を入力してください。'); return; }
+
+  const selected = [...document.querySelectorAll('.ap-agency-cb:checked')].map(cb => Number(cb.value));
+  if (!selected.length) { showError('ap-error', '送付先の業者を1社以上選択してください。'); return; }
+  if (!checkUsageLimit('ap-error')) return;
+
+  const agencies = getAgencies().filter(a => selected.includes(a.id));
+  const type  = document.getElementById('ap-type').value;
+  const area  = v('ap-area')  || '未入力';
+  const age   = v('ap-age')   || '未入力';
+  const wish  = v('ap-wish')  || 'なし';
+
+  setBtnLoading('ap-btn', 'ap-btn-label', true, '✉️ 査定依頼メールを生成する');
+  document.getElementById('ap-result-wrap').style.display = 'none';
+
+  const systemPrompt = `あなたは不動産会社のスタッフです。売主様から査定依頼を受け、不動産業者向けに査定依頼メールを作成してください。
+【要件】
+- 件名：売買査定のご依頼
+- 本文は「【担当者名】様」で始める（プレースホルダーとして【担当者名】と記載）
+- 丁寧かつ簡潔なビジネスメール
+- 物件情報を箇条書きで整理して記載
+- 返答期限や連絡先など必要な内容を含める
+- 本文のみ出力（件名は不要）`;
+
+  const userPrompt = `以下の物件の査定依頼メール本文を作成してください。
+所在地：${address}
+物件種別：${type}
+面積：${area}
+築年数：${age}
+売主様のご要望：${wish}`;
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `ステータスコード ${res.status}`);
+    }
+    const data = await res.json();
+    const baseBody = data.content[0].text.trim();
+    consumeUsage();
+
+    _appraisalMails = agencies.map(a => ({
+      agency:  a,
+      subject: '売買査定のご依頼',
+      body:    baseBody.replace(/【担当者名】/g, a.contact),
+    }));
+
+    renderMailResults();
+    document.getElementById('ap-result-wrap').style.display = 'block';
+    document.getElementById('ap-result-wrap').scrollIntoView({ behavior:'smooth', block:'start' });
+  } catch (e) {
+    showError('ap-error', `生成に失敗しました。しばらく待ってから再度お試しください。\n詳細：${e.message}`);
+  } finally {
+    setBtnLoading('ap-btn', 'ap-btn-label', false, '✉️ 査定依頼メールを生成する');
+  }
+}
+
+function renderMailResults() {
+  const list = document.getElementById('ap-mail-list');
+  list.innerHTML = _appraisalMails.map((m, i) => `
+    <div class="mail-result-card">
+      <div class="mail-result-header">
+        <div>
+          <div class="mail-result-agency">${escHtml(m.agency.company)} / ${escHtml(m.agency.contact)}様</div>
+          <div class="mail-result-email">${escHtml(m.agency.email)}</div>
+        </div>
+        <button class="mail-send-btn" onclick="sendOneMail(${i})">📨 送付</button>
+      </div>
+      <div class="mail-result-body" id="ap-mail-body-${i}">${escHtml(m.body)}</div>
+    </div>`).join('');
+  document.getElementById('ap-bulk-info').textContent =
+    `${_appraisalMails.length}社への送付準備が完了しました`;
+}
+
+function sendOneMail(idx) {
+  const m = _appraisalMails[idx];
+  const mailto = `mailto:${encodeURIComponent(m.agency.email)}?subject=${encodeURIComponent(m.subject)}&body=${encodeURIComponent(m.body)}`;
+  window.open(mailto, '_blank');
+}
+
+function bulkSendAll() {
+  _appraisalMails.forEach((m, i) => {
+    setTimeout(() => sendOneMail(i), i * 300);
+  });
 }
 </script>
 </body>
